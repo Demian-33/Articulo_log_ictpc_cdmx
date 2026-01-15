@@ -114,7 +114,7 @@ tproc_vb <- proc.time()-t0 # Tiempo de proceso
 ## es mas lento este ajuste, no correr
 t0 <- proc.time()
 fit_hmc <- mod$sample(
-  output_dir = r'(C:\Maestría_CP\Tesis\Articulo-GitHub)',
+  output_dir = r'(C:\Maestria\Articulo-GitHub)',
   data = dat,
   seed = 123,
   init = list(init_list),
