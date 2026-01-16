@@ -9,7 +9,7 @@ Este repositorio contiene:
 Para generar un documento MS Word (`.docx`), puede emplearse `pandoc`. Sin embargo, no reproduce todos los elementos. Por ejemplo, el comando empleado es:
 
 
-`pandoc Artículo-final.tex --filter pandoc-crossref --bibliography=referencias-short.bib --citeproc --csl apa.csl -o Artículo-final.docx`
+`pandoc Articulo-final.tex --filter pandoc-crossref --bibliography=referencias-short.bib --citeproc --csl apa.csl -o Articulo-final.docx`
 
 Un excelente tutorial para esta tarea: *https://youtu.be/28yfsJ1sj8I*
 
