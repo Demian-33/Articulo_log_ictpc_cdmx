@@ -1,0 +1,1087 @@
+\documentclass[11pt]{article}
+\usepackage{amsmath, amssymb, mathtools, geometry, hyperref, graphicx, float, caption, subcaption, tabularx, multicol, multirow, makecell, rotating, pdflscape, verbatim, tabularx, makecell, booktabs, xltabular}
+
+\renewcommand{\sectionautorefname}{Sección}
+\renewcommand{\subsectionautorefname}{Sección}
+\renewcommand{\equationautorefname}{Ecuación}
+\renewcommand{\figureautorefname}{Figura}
+\renewcommand{\tablename}{Cuadro}
+\renewcommand{\figurename}{Figura}
+
+% \usepackage[spanish]{babel}
+
+% natbib allows \citet solo el (año) and \citep (toda la cita en parentesis)
+
+% ext-authoryear, draft
+
+% \usepackage[language=spanish, giveninits=true, style=authoryear, sorting=nyt]{biblatex}
+\usepackage[language=spanish, backend=biber, style=authoryear, giveninits=true, uniquename=false]{biblatex}
+\addbibresource{referencias-short.bib}
+
+\usepackage{xpatch}
+
+% \usepackage{natbib}
+% \bibliographystyle{abbrvnat}
+% \setcitestyle{authoryear,open={((},close={))}} %Citation-related commands
+
+\geometry{
+  paper=letterpaper,
+  margin=2.54cm,
+}
+
+\newcommand{\KL}[2]{\operatorname{KL}\left(#1\,\Vert\,#2\right)}
+\newcommand{\ELBO}[1]{\operatorname{ELBO}\left(#1\right)}
+\newcommand{\E}{\operatorname{\mathbb{E}}}
+\newcommand{\Var}{\operatorname{\mathbb{V}ar}}
+\newcommand{\Cov}{\operatorname{\mathbb{C}ov}}
+\DeclareMathOperator*{\argmin}{arg\,min}
+\DeclareMathOperator*{\argmax}{arg\,max}
+
+\renewcommand{\baselinestretch}{1.25}
+
+
+\title{
+% Estudio del ingreso corriente en México mediante un modelo de regresión log normal sesgado en áreas pequeñas con enfoque Bayesiano Variacional
+% Análisis del ingreso corriente trimestral en México a través de un modelo de regresión Bayesiana Variacional con errores log normal sesgados
+% Análisis del ingreso corriente trimestral en México mediante un modelo de regresión log-normal sesgado con enfoque Bayesiano Variacional
+% Análisis del ingreso corriente en México mediante un modelo de regresión log-normal sesgado en áreas pequeñas con enfoque Bayesiano Variacional
+% Análisis del ingreso trimestral en la Ciudad de México mediante un modelo de regresión log-normal sesgado en áreas pequeñas con enfoque Bayesiano objetivo.
+% Análisis del ingreso corriente en los hogares de la Ciudad de México mediante un modelo de regresión en áreas pequeñas con inferencia Bayesiana Variacional.
+Análisis del ingreso corriente total per cápita en los hogares de la Ciudad de México mediante un modelo de regresión Bayesiana en áreas pequeñas.
+}
+
+\date{}
+
+\author{Saul Arturo Ortiz Muñoz \\ Sergio Pérez Elizalde \\ Jesús Emanuel Paredes Romero \\ Beatriz Juárez Piña}
+
+
+\begin{document}
+
+\allowdisplaybreaks
+
+\maketitle
+
+\section*{Resumen}
+
+Se propone un modelo de regresión Bayesiana variacional con errores normales asimétricos en áreas pequeñas para estudiar el logaritmo del ingreso corriente total per cápita en los hogares de la Ciudad de México, con información proveniente de fuentes oficiales y siguiendo los criterios de procesamiento establecidos por el Coneval. El modelo señala que la variable respuesta presenta distintos grados de sesgo por alcaldía. Se identificaron las covariables más relevantes para los modelos de regresión. Se concluye que el método variacional es una alternativa viable para acelerar la inferencia con respecto a los algoritmos Bayesianos usuales basados en muestreo.
+
+\begin{comment}
+Se propone un modelo de regresión lineal Bayesiana con errores log-normales sesgados en un contexto de áreas pequeñas para estudiar el ingreso corriente total per cápita (ICTPC) de los hogares en la Ciudad de México a partir de información proveniente de la Medición Multidimensional de la pobreza (MMP) de 2024; de la Encuesta Nacional de Ingresos y Gastos de los Hogares (ENIGH) del 2024 y del Censo de Población y Vivienda (Censo), del 2020; todas estas fuentes de información publicadas por el Instituto Nacional de Estadística y Geografía (INEGI). Se estimó un parámetro de forma para todas las alcaldías con el propósito de cuantificar el sesgo en el log-ICTPC: este parámetro tiene una representación con escala en (0, 1), donde cero indica sin sesgo y uno el caso límite. Se encontró que a excepción de la demarcación Venustiano Carranza ($\tilde{\rho}_{16}=0.355$), todas tienen un sesgo considerable en torno a 0.85.
+
+% Por otro lado, mediante la técnica de búsqueda estocástica de variables fue posible seleccionar aquellas covariables relevantes para los modelos de regresión, es decir las que se emplean de forma recurrente en los modelos.
+
+Por otro lado, al aplicar la técnica de búsqueda estocástica de variables fue posible estimar la frecuencia de aparición de estas y así identificar las características más relevantes para los modelos de regresión, es decir las que se emplean de forma recurrente.
+
+% Estas se relacionan principalmente con: renta mensual en pesos, el tiempo de trabajo en horas y edad de cada individuo.
+
+Así mismo, el método Bayesiano Variacional permitió disminuir el tiempo de cómputo para realizar la inferencia con respecto a los algoritmos de muestreo de la densidad \underline{a posteriori} usuales. Finalmente, el enfoque \underline{Bayesiano objetivo} que se utilizó, garantiza que a partir de este conjunto de datos, el análisis puede reproducirse con otras técnicas y obtener resultados consistentes con los que se reportan aquí. 
+
+% A partir del parámetro de forma de la distribución normal asimétrica, se encontró que en las alcaldías Tláhuac, Milpa Alta y La Magdalena Contreras el logaritmo natural del ingreso corriente total en los hogares presenta una mayor desigualdad con respecto al resto de alcaldías $(\tilde{\rho}_{10}=0.86,\, \tilde{\rho}_{8}=0.81,\, \tilde{\rho}_{7}=0.77)$. En este mismo sentido, las alcaldías Venustiano Carranza y Cuahutémoc presentan menor desigualdad en el logaritmo natural del ingreso $(\tilde{\rho}_{16}=0.04,\, \tilde{\rho}_{14}=0.14,\, \tilde{\rho}_{xx}=x.xx)$. Se estimó un intercepto para cada región, que se puede considerar como una medida del ingreso corriente base en cada alcaldía, así, en las alcaldías MH, La Mag Con y Benito J. se observa un mayor ingreso corriente base en los hogares ($\tilde{\mu}_{xx}=x.xx$, $\tilde{\mu}_{xx}=x.xx$, $\tilde{\mu}_{xx}=x.xx$)., mientas que en Milpa Alta, Iztapalapa y Xochimilco, el ingreso base es menor ($\tilde{\mu}_{xx}=x.xx$, $\tilde{\mu}_{xx}=x.xx$, $\tilde{\mu}_{xx}=x.xx$).
+
+% Por otro lado, mediante la técnica de búsqueda estocástica de variables fue posible seleccionar aquellas covariables relevantes para los modelos de regresión, es decir las que se obtuvieron con mayor frecuencia. Estas son: renta mensual en pesos, el tiempo de trabajo en horas y edad de cada individuo. Así mismo, el método Bayesiano Variacional permitió disminuir el tiempo de cómputo para realizar la inferencia, con respecto a otros algoritmos de muestreo clásicos. Finalmente, el enfoque \underline{Bayesiano objetivo} que se utilizó, garantiza que a partir de este conjunto de datos, el análisis puede reproducirse con otras técnicas y obtener resultados consistentes con los que se reportan aquí. 
+\end{comment}
+
+
+\section{Introducción}
+\label{sec:introduccion}
+
+La medición de la pobreza adquiere relevancia porque permite identificar con mayor precisión las carencias que enfrentan los grupos afectados y orientar intervenciones públicas más efectivas. En México, esta medición estuvo durante años a cargo del Consejo Nacional de Evaluación de la Política de Desarrollo Social (Coneval), cuya metodología retomaba elementos del enfoque propuesto por Alkire y Foster; actualmente, la responsabilidad recae en el Instituto Nacional de Estadística y Geografía (INEGI). Desde una perspectiva integral, la pobreza se relaciona con condiciones de vida que vulneran la dignidad humana, restringen el ejercicio de derechos y obstaculizan la satisfacción de necesidades básicas, dificultando así la plena participación social de las personas \textcite{coneval:2023}.
+
+Durante décadas, el producto interno bruto per cápita fue utilizado como indicador principal del bienestar económico de la población; sin embargo, su capacidad explicativa resulta limitada para capturar la complejidad de las condiciones de vida contemporáneas. La evaluación del bienestar requiere enfoques más amplios que reconozcan que la pobreza no puede reducirse únicamente al nivel de ingresos, pues intervienen dimensiones que no se reflejan de manera directa en la capacidad monetaria de los hogares. Desde esta perspectiva multidimensional, surge la necesidad de integrar indicadores que permitan comprender de manera más completa las privaciones que experimentan los individuos. Contar con mediciones adecuadas no solo mejora el diagnóstico social, sino que constituye un elemento clave para diseñar políticas públicas que respondan de manera efectiva a las distintas manifestaciones de la pobreza \textcite{saenz:2020}.
+
+Con el propósito de explorar la relación entre el ingreso corriente total per cápita (ICTPC) de los hogares con las características de la población y de las viviendas que habitan, se propone un modelo de regresión que estudie y cuantifique la asociación con respecto a estas covariables, así mismo, se desea modelar también la naturaleza de este conjunto de datos: en términos generales, la distribución empírica del ingreso se caracteriza por estar sesgada a la derecha, es decir, es común observar valores grandes. Así pues, se plantea construir un modelo de regresión que sea capaz de no solo capturar este sesgo, si no también cuantificarlo y aprovecharlo para enriquecer y hacer más robusta la inferencia estadística ante la incertidumbre.
+
+% Podemos decir la aportación de forma explicita:
+
+El objetivo de este trabajo es explorar una alternativa para medir el bienestar económico, el cuál es parte de la medición multidimensional de la pobreza (MMP) municipal para el año 2025, el siguiente periodo quinquenal con respecto a la medición previa. Para ello, se realizan predicciones del ICTPC para todos los hogares no muestreados de los cuáles se tiene información auxiliar proveniente del Censo 2020, empleando y procesando los datos de acuerdo a los criterios establecidos por el Coneval. La aportación principal es el uso de errores normales sesgados que aportan flexibilidad y un método variacional para acelerar la inferencia Bayesiana. 
+
+% Esta parte debe ser pequeñita:
+El resto del documento está estructurado de la siguiente forma: en la Sección \ref{sec:literatura} se revisa la distribución normal sesgada, los modelos en áreas pequeñas y la MMP a nivel municipal desarrollada por el Coneval. La Sección \ref{sec:metodologia} se centra en los detalles del modelo propuesto y la obtención del conjunto de datos de acuerdo a los criterios oficiales que El Consejo estableció.
+% se centra en los detalles del ajuste del modelo propuesto, la primera parte muestra la especificación estadística, y el resto relata el proceso para obtener el conjunto de datos y la variable objetivo de acuerdo a los criterios oficiales que El Consejo estableció.
+Posteriormente, en la Sección \ref{sec:resultados} se presentan algunos estadísticos descriptivos del ICTPC y los principales resultados obtenidos con la muestra \underline{a posteriori} aproximada. Finalmente, en la Sección \ref{sec:conclusiones} se discuten brevemente los resultados y se presentan las conclusiones.
+% se emiten algunas recomendaciones para posibles análisis futuros. 
+
+\section{Revisión de literatura}
+\label{sec:literatura}
+
+\subsection{Distribución normal asimétrica}
+\label{subsec:normal-sesgada}
+
+La distribución normal asimétrica es una densidad continua de tres parámetros con soporte en $\mathbb{R}$, generaliza a la distribución normal a través de un parámetro de forma que controla el sesgo, lo que le proporciona mayor flexibilidad, además de que hereda algunas de sus propiedades. Estas características la hacen atractiva para incluirla en modelos estadísticos como alternativa a la distribución normal. La variable aleatoria $X$ tiene densidad normal asimétrica o normal sesgada con parámetros de localidad, escala y forma $(\mu, \sigma^{2}, \lambda)\in \mathbb{R}\times\mathbb{R}_{+}\times\mathbb{R}$ si su densidad de probabilidad está dada por
+\begin{align}
+\label{eq:sn-density}
+f_{X}(x \vert \mu,\, \sigma^{2},\, \lambda) &= \frac{2}{\sigma} \phi\left(\frac{x-\mu}{\sigma}\right) \, \Phi\left(\lambda\frac{x-\mu}{\sigma}\right)I_{(-\infty,\, \infty)}(x),
+\end{align}
+aquí $\phi$ y $\Phi$ denotan la función de densidad y distribución normal estándar, además, escribimos $X\sim SN(\mu, \sigma^{2}, \lambda)$.\footnote{SN: \underline{skew normal}.} Esta representación se conoce como {parametrización directa}. Sea $\rho\in(-1,\, 1)$ definido como $\rho = \lambda/\sqrt{1+\lambda^{2}}$, \textcite{Azzalini:2013} muestra las siguientes propiedades básicas de $X$:
+\begin{itemize}
+\item Para $a\in\mathbb{R}$ y $b>0$, $a+bX \sim SN(a+b\mu, b^{2}\sigma^{2}, \lambda)$, es decir, es cerrada bajo transformaciones de localidad y escala.
+\item $\mathbb{E}[X] = \mu + \sigma  \sqrt{\frac{2}{\pi}\rho^{2}}$. $\mathbb{V}\text{ar}[X] = \sigma^{2}\left(1 - \frac{2}{\pi}\rho^{2}\right)$
+\item El coeficiente de asimetría esta dado por \[
+\frac{\mathbb{E}[(X-\mathbb{E}[X])^{2}]}{(\mathbb{V}\text{ar}[X])^{3/2}} = \sqrt{\frac{2}{\pi}}(4-\pi)\lambda^{3}\big/\pi(1-\frac{2}{\pi}\lambda^{2})^{3/2}.\]
+Usualmente, esta cantidad se denota con $\gamma_{1}$. \textcite{cristian-2007} sugieren que como $\gamma_{1}\in(-0.9953,\, 0.9953)$, esta densidad es adecuada solo para modelar sesgo leve o moderado.
+\item Si $\lambda=0$, entonces $SN(x \mid \mu,\, \sigma^{2},\, \lambda=0) \equiv N(x \vert \mu,\, \sigma^{2})$. Además, si $\lambda\to\infty$ ($-\infty$), entonces $SN(x \mid \mu,\, \sigma^{2},\, \lambda) \to N(x \mid \mu,\, \sigma^{2})$ truncada a la derecha (izquierda) en cero. Este es el caso límite.
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}{0.45\textwidth}
+\includegraphics[width=\linewidth]{Figuras/SN_density_pos.png}
+\caption{}
+\end{subfigure}
+\begin{subfigure}{0.45\textwidth}
+\includegraphics[width=\linewidth]{Figuras/logSN_density_pos.png}
+\caption{}
+\end{subfigure}
+\caption[]{Densidad (log-)normal asimétrica estándar para algunos valores de $\lambda>0$. Fuente: elaboración propia.}
+\label{fig:Skew-Normal-D}
+\end{figure}
+
+A diferencia del caso normal, la media y varianza de esta distribución no coinciden con los parámetros de localidad y escala. Así mismo, la inferencia sobre estos parámetros presenta dificultades prácticas y por ello se propone emplear la parametrización centrada \parencite{azzalini-1985, cristian-2007}. Sea $Z\sim SN(0, 1, \lambda)$, definimos a $X$ como
+\begin{equation}
+X=\mu + \sigma\left(\left(Z - \mathbb{E}[Z]\right) / \sqrt{\mathbb{V}\text{ar}[Z]} \right),
+\end{equation}
+además, si reemplazamos $\lambda$ por el coeficiente de asimetría $\gamma_{1}$, entonces $X$ tiene distribución normal asimétrica centrada, y se denota como $X\sim SN^{C}(\mu,\, \sigma^{2},\, \gamma_{1})$. La función de densidad de $X$ es más extensa, aunque reensambla la Ecuación \ref{eq:sn-density}.\footnote{Para más detalles, vea \textcite{g3-skew-normal, azevedo:2011}.}
+% Así mismo, es posible invertir ambas parametrizaciones para obtener los parámetros directos o los parámetros centrados.
+En la discusión posterior, únicamente centramos la media y varianza, dejando el parámetro de forma sin modificación. De este modo, es posible mantener sólo un tipo de notación.
+% Por ejemplo, a partir de las propiedades previas, la variable aleatoria $X$ con distribución
+% \begin{equation}
+% X\sim SN\left(\mu-\sigma\sqrt{\frac{2}{\pi}\rho^{2}},\, \sigma^{2}\big/\sqrt{1-\frac{2}{\pi}\rho^{2}},\, \lambda\right),
+% \end{equation}
+% cumple que $\mathbb{E}[X]=\mu$ y $\mathbb{V}\text{ar}[X]=\sigma^{2}$.
+
+\subsection{Truncamiento oculto}
+\label{subsec:truncamiento}
+
+Una representación estocástica de la densidad normal asimétrica que es útil para la exposición siguiente, es mediante el proceso de truncamiento oculto.\footnote{Otra representación estocástica puede consultarse en \textcite{cristian-2007}.} La utilidad práctica es evitar el uso de la densidad normal sesgada de forma explicita. Ahora, este proceso puede surgir en diversos contextos, quizás incluso de forma inconsciente, suponga que se observan dos variables aleatorias normales correlacionadas $X_{1}$ y $X_{2}$, si registramos alguna de estas variables siempre que la otra exceda cierto umbral $\mu_{2}$ (es decir $Y=X_{1}$ siempre que $X_{2}>\mu_{2}$), entonces inducimos sesgo en las observaciones retenidas ($Y$), y este sesgo es proporcional a  su correlación $\rho$, de este modo, las observaciones que filtramos ($Y$) de acuerdo a la otra variable ($X_{2}$) tendrán distribución normal asimétrica; además, este mecanismo puede extenderse a más dimensiones. \parencite[][]{Azzalini:2013, arellano:2008, arnold-hidden1}.
+% si $X_{1}, X_{2}, \ldots, X_{n}, X_{n+1}$ tiene distribución normal multivariada, entonces al filtrar $X_{1}, X_{2}, \ldots, X_{n}$ condicionado a que $X_{n+1}$ exceda cierto umbral, obtenemos una densidad normal asimétrica en $n$ dimensiones. \parencite[][]{arnold-hidden1, Azzalini:2013}.
+\begin{comment}
+Sean $\boldsymbol{V}_{n}$ y $W$ variables aleatorias con densidad conjunta normal multivariada de dimensión $n+1$:
+\begin{align}
+\label{eq:normal-multivariada}
+\begin{bmatrix}
+\boldsymbol{V}_{n} \\ W
+\end{bmatrix} &\sim N_{n+1}\left(
+\begin{bmatrix}
+\boldsymbol{\mu}_{n} \\ 0
+\end{bmatrix},\, 
+\sigma^{2}
+\begin{bmatrix}
+\bar{\Sigma} & \rho\boldsymbol{1}_{n} \\ \rho\boldsymbol{1}^{T}_{n} & 1
+\end{bmatrix}
+\right),
+\end{align}
+donde $\bar{\Sigma} = (1-\rho^{2})I_{n} + \rho^{2}J_{n}$, aquí $I_{n}$ es la matriz identidad de orden $n$ y $J_{n}$ es la matriz de unos de orden $n$.
+% Esta elección de matriz de covarianza permite la generalización de la distribución normal asimétrica a dos o más dimensiones. De igual modo, esta matriz impone una estructura de correlación entre los elementos de $V_{n}$.
+Ahora bien, si definimos $\boldsymbol{X}_{n}=\boldsymbol{V}_{n}$ siempre que $W>0$, entonces $\boldsymbol{X}_{n}$ tiene distribución normal asimétrica multivariada\footnote{Por ejemplo, vea \parencite[][]{arnold-hidden1, Azzalini:2013}} con parámetro de localidad $\boldsymbol{\mu}_{n}$, matriz de escala $\sigma^{2}\text{diag}(\bar{{\Sigma}})$ y vector de forma $\boldsymbol{\lambda}_{n} = (\rho/\sqrt{1-\rho^{2}})\boldsymbol{1}_{n}$. A partir de esto, se pueden demostrar que la densidad conjunta o aumentada de $(\boldsymbol{X}_{n}, W)^{T}$ está dada por
+\begin{equation}
+p(\boldsymbol{x}_{n}, w) \equiv p(\boldsymbol{x}_{1:n} \mid w) \, p(w) = 2\prod_{i=1}^{n} N\big(x_{i} \mid \mu_{i} + w\rho , \sigma^{2}(1-\rho^{2})\big) \, N(w \mid 0, \sigma^{2}) I_{(0, \infty)}(w). \tag{7}
+\end{equation}
+
+Cabe destacar que la utilidad práctica es eludir el uso de la densidad normal sesgada de forma explicita, y esto se consigue usando una estrategia similar a la {aumentación de datos}: al comparar las dos ecuaciones anteriores, se hace evidente la virtud del proceso de truncamiento oculto: se evita usar una representación que depende de $\Phi$, la función de distribución normal, lo que alivia el costo numérico de optimizar parámetros dentro de una integral.
+\end{comment}
+% En este escenario también es posible centrar a los parámetros, y para ello se centra a cada entrada del vector. \parencite[][]{arellano:2008}.
+
+\subsection{Modelos en áreas pequeñas}
+\label{subsec:areas-pequeñas}
+
+Cuando se trabaja en el contexto de áreas pequeñas se obtienen dos tipos de estimadores: directos e indirectos. Los estimadores directos llevan a cabo la inferencia con información exclusiva de cada área pequeña, y casi siempre se construyen a partir de un diseño muestral, por ejemplo, encuestas. Por otro lado, los estimadores indirectos toman información de otras áreas pequeñas, de tal modo que pueden hacer inferencias más robustas. De este modo, los estimadores indirectos emplean modelos estadísticos con el fin de hacer predicciones de alguna variable objetivo, empleando información auxiliar \parencite{rao:2015}.
+
+En la estimación de áreas pequeñas, \underline{small-area estimation} (SAE), no es el área la que es pequeña, sino la muestra tomada del dominio específico: un dominio se considera pequeño si su tamaño de muestra no es lo suficientemente grande como para obtener estimaciones directas con la precisión adecuada. En caso contrario, se dice que el dominio es grande.\footnote{\textcite{SAE} menciona que una expresión mejor podría ser: `estimación de muestra pequeña'.} Por lo tanto, el término área pequeña no se limita a una región en el sentido geográfico, sino que se refiere a cualquier subpoblación para la que no se pueden producir estimaciones directas con una precisión adecuada.
+
+% De hecho, los términos estimador de área pequeña y estimador indirecto se usan de forma indistinta \cite{SAE}.
+
+Dentro de la corriente de SAE, existen dos niveles principales de estudio, el más general son los modelos a nivel de área, mientras que los más específicos son a nivel de unidad, es decir, la unidad de observación son objetos muestreados dentro de cada dominio. 
+
+% \begin{figure}[H]
+% \centering
+% \includegraphics[width=0.45\linewidth]{Figuras/Areas-Pequenas.png}
+% \caption[]{Representación de $M=4$ áreas pequeñas. Las observaciones $y_{ij}$ se indexan de acuerdo a la región y número de observación en esta, los círculos sólidos (vacíos) representan instancias (no) observadas. Fuente: elaboración propia.}
+% \label{fig:areas-pequeñas}
+% \end{figure}
+
+\subsection{Estudios previos}
+\label{subsec:estudios-previos}
+
+Parte de la literatura que ha estudiado los ingresos desde una perspectiva estadística, se concentra en bondad de ajuste de modelos probabilísticos a datos observados. Por ejemplo: \textcite{arnold:2015} propone modelos Pareto generalizados para tal propósito, \textcite{sergio:2012} comparan el ajuste del  ingreso mediante la distribución Pareto, Lognormal y Dagum, entre otros autores.
+
+Por otro lado, dentro del contexto de áreas pequeñas, se persigue otro objetivo: realizar predicciones y estimaciones para los parámetros del modelo asumido. \textcite{BHF} propusieron un modelo a nivel unidad con errores anidados, el cuál identificamos como un modelo de regresión lineal con un efecto aleatorio para cada región de estudio: sea $(y_{ij},\, \boldsymbol{x}_{ij})$ el atributo de interés y la información auxiliar asociada, para las regiones $i=1,\, 2,\, \ldots,\, M$ y observación $j=1,\, 2,\, \ldots.\, N_{i}$, se asume que
+\begin{equation}
+\label{eq:modelo-lineal-mixto}
+y_{ij} = \boldsymbol{x}_{ij}^{T}\boldsymbol{\beta} + u_{i} + e_{ij},
+\end{equation}
+donde $u_{i}\sim N(0,\, \sigma^{2}_{u})$, $e_{ij}\sim N(0,\, \sigma^{2}_{e})$ y además $u_{i}$ es indendiente de $e_{ij}$, para todo par $(i,\, j)$. Adicionalmente, se asume que no existe sesgo, de modo que la inferencia puede realizarse únicamente con los datos observados.\footnote{Para más detalle sobre los aspectos de inferencia, puede consultar \textcite[][]{rao:2015}.} Al momento de calcular los estimadores, el modelo toma información de las demás regiones de estudio, de ahí a que se consideren estimadores indirectos. En el mismo sentido, \textcite{BHF-SN} proponen generalizar este modelo al relajar el supuesto de normalidad: ahora ambos errores pertenecen a la familia normal asimétrica, dotando así de mayor flexibilidad; específicamente, los autores propusieron
+\begin{equation}
+\begin{aligned}
+u_{i} &\sim SN(-\rho_{u}\sigma_{u}\sqrt{2/\pi},\, \sigma^{2}_{u},\, \lambda_{u}) \\
+e_{ij} &\sim SN(-\rho_{e}\sigma_{e}\sqrt{2/\pi},\, \sigma^{2}_{e},\, \lambda_{e})
+\end{aligned}
+\end{equation}
+donde $\rho_{u} = \lambda_{u}/ \sqrt{1 + \lambda_{u}^{2}}$, $\rho_{e} = \lambda_{e}/ \sqrt{1 + \lambda_{e}^{2}}$ y nuevamente $u_{i}$ es independiente de $e_{ij}$, para todo par $(i,\, j)$.
+% Es posible observar que aquí ya han centrado las variables aleatorias a fin de que su valor esperado sea cero, además 
+$u_{i}$ es un efecto aleatorio dentro de cada área pequeña, sin embargo, los parámetros de forma $\lambda_{u}$ y $\lambda_{e}$ son los mismos para todas las $M$ regiones. Para hacer inferencia sobre el modelo, los autores recurren a una generalización de la distribución normal sesgada llamada \underline{Closed Skew Normal} (CSN), la cuál viene acompañada de mayor complejidad computacional.
+
+La densidad log-normal sesgada no es la única alternativa para modelar datos de ingreso, y en general, respuestas estrictamente positivas; sin embargo, esta distribución hereda algunas propiedades que resultan útiles desde el punto de vista práctico: por ejemplo, es cerrada bajo transformaciones de cambio de localidad y escala, además, en el contexto de regresión, conserva la interpretación de los coeficientes $\boldsymbol{\beta}$ como el cambio promedio al observar un incremento unitario -o bien, si las variables están estandarizadas, en desviaciones estándar-, de las covariables, una a la vez.
+
+\subsection{Metodología para la medición multidimensional de la pobreza}
+\label{subsec:antecedentes}
+
+El Consejo Nacional de Evaluación de la Política de Desarrollo Social (Coneval) fue un organismo autónomo y descentralizado cuya tarea principal consistía en la generación e implementación de diversas técnicas estadísticas para cuantificar la pobreza desde varios ámbitos, abordando así la medición multidimensional de la pobreza (MMP) en México. La última edición sobre la MMP que realizó el Coneval fue en 2022, siendo ahora el Instituto Nacional de Estadística y Geografía (INEGI) el organismo encargado de darle continuidad a esta medición. En 2024 el INEGI publicó su primera edición de la MMP tomando como base los mismos  lineamientos propuestos por el Coneval. Estos lineamientos tienen sustento en los artículos 36 y 37 de la Ley General de Desarrollo Social (LGDS) y determinan que la MMP se construye a partir de dos fuentes de datos oficiales y productos generados de estas: (1) el Censo de Población y Vivienda (Censo) y (2) la Encuesta Nacional de Ingresos y Gastos en los Hogares (ENIGH). 
+
+Los lineamientos establecen que la MMP debe tener una periodicidad mínima bienal en los niveles estatal y nacional, y quinquenal a nivel municipal. Para este último caso resulta complejo realizar la MMP dado que la ENIGH solo es representativa a nivel estatal y nacional, y por tanto, se hace uso de otros métodos de estimación. En 2020, Coneval construyó la MMP a nivel municipal a partir del ajuste de modelos en áreas pequeñas para realizar predicciones sobre atributos de interés, entre ellos, el ingreso corriente total per cápita, mediante la técnica del mejor predictor heterocedástico empírico,  \underline{empirical best predictor heterokedastic}, (EBPH), la cual está basada en la teoría de modelos lineales mixtos y es equivalente al planteamiento en la Ecuación \ref{eq:modelo-lineal-mixto}, pero permitiendo que la varianza de los hogares sea distinta entre sí, de ahí su nombre.
+
+El objetivo principal de la MMP es estimar el número y porcentaje de la población en situación de pobreza. Para realizar esta estimación, se establece que la pobreza se compone de dos espacios analíticos principales: la dimensión de derechos sociales o carencias, que consta de seis indicadores dicotómicos: rezago educativo, acceso a los servicios de salud, acceso a la seguridad social, calidad y espacios de la vivienda, acceso a los servicios básicos en la vivienda y acceso a la alimentación; y el espacio de bienestar económico, cuyo indicador es el ICTPC. Al incorporar estos dos rubros, se clasifica a la población en uno de cuatro cuadrantes de pobreza \parencite{inegi-reporte:2025, coneval:2020}:
+\begin{itemize}
+\item[I.] Población en situación de pobreza multidimensional: población con ingreso inferior al
+valor monetario de las líneas de pobreza por ingresos\footnote{Valor monetario de la canasta alimentaria más el valor monetario de la canasta no alimentaria: 3296.92 y 4564.97 pesos mexicanos para los ámbitos rural y urbano.} (LPI) respectivas y con al menos una carencia social, en este cuadrante, la población se desagrega en dos grupos:
+\begin{itemize}
+\item [I$^\prime$.] Población en situación de pobreza extrema: su ingreso es inferior al valor monetario de las líneas de pobreza extrema por ingresos\footnote{Valor de la canasta alimentaria: 1800.55 y 2354.65 pesos mexicanos para los ámbitos rural y urbano.} (LPEI) y presenta tres o más carencias sociales.
+\item[I'.] Población en situación de pobreza moderada: percibe un ingreso inferior a las LPI y presenta entre una y dos carencias.
+\end{itemize}
+\item[II.] Población vulnerable por carencias sociales: población con una o más carencias
+sociales, pero cuyo ingreso es igual o superior a las LPI respectivas, 
+\item [III.] Población vulnerable por ingresos: población sin carencias sociales y con ingreso
+inferior a las LPI respectivas,
+\item[IV.] Población no pobre multidimensional y no vulnerable: población con ingreso igual o
+superior a las LPI respectivas y sin ninguna carencia social.
+\end{itemize}
+% Conectar la medicion municipal de la pobreza con el Censo, ¿por que lo necesitamos para estimar el numero de personas y su porcentaje usando el Censo?; quizás sea útil recordar los factores de expansión para esta tarea.
+Es relevante señalar que los indicadores de seguridad social, alimentación e ingreso no pueden obtenerse directamente a partir de información del Censo, por lo que necesitan ser estimados a través de modelos de regresión en áreas pequeñas \parencite{coneval:2020}. En este sentido, el modelo propuesto permite abordar la dimensión de la pobreza que corresponde a la vulnerabilidad por ingresos.
+% hay que ver esta parte de abajo
+% Así, el objetivo es realizar predicciones del ICTPC para todos los hogares no muestreados de los cuáles se tiene información auxiliar proveniente del Censo 2020, y para tal propósito, se emplean y procesan los datos siguiendo los criterios establecidos por el Coneval. De este modo, se propone explorar una alternativa para desarrollar esta parte de la MMP municipal para el año 2025, el siguiente periodo quinquenal con respecto a la medición previa.
+
+\section{Metodología}
+\label{sec:metodologia}
+
+A continuación, se resume el modelo propuesto de acuerdo a los siguientes puntos
+\begin{itemize}
+\item Se emplean errores log-normales sesgados para la variable objetivo, es decir, se asume que el logaritmo del ICTPC sigue una distribución normal asimétrica.
+
+\item Se considera un contexto de áreas pequeñas: se desea realizar predicciones para los objetos de estudio a lo largo de todos los dominios, a partir de una muestra de solo algunas regiones.
+
+\item Se emplea un enfoque Bayesiano objetivo: las distribuciones \underline{a priori} que se consideran son no informativas, lo cuál maximiza la información proveniente de la muestra, a la vez que se pretende realizar un análisis reproducible y neutral.
+
+\item Se utiliza un algoritmo automático de inferencia variacional.
+% del tipo \underline{Forma Fija}.
+Este método es fácil de implementar y permite acelerar la inferencia Bayesiana.
+\end{itemize}
+
+\subsection{Planteamiento del modelo}
+\label{subsec:modelo-propuesto}
+
+El modelo propuesto pertenece a la corriente de estimación indirecta a nivel unidad: se supone que la variable objetivo sigue una distribución log-normal sesgada, lo cual intenta mimetizar dos aspectos inherentes al conjunto de datos de ingresos: siempre son positivos y su distribución empírica es asimétrica. Para la observación $(i,\, j)$ se plantea:
+\begin{equation}
+y_{ij} \sim SN(\mu_{i} + \boldsymbol{x}_{ij}^{T}\boldsymbol{\beta} - \sigma\rho_{i}\sqrt{2/\pi},\, \sigma^{2}/(1-2\rho_{i}^{2}/\pi),\, \lambda_{i}),
+\end{equation}
+y de forma equivalente:
+\begin{equation}
+y_{ij} = \mu_{i} + \boldsymbol{x}_{ij}^{T}\boldsymbol{\beta} + \sigma\frac{e_{ij}-\mathbb{E}[e_{ij}]}{\sqrt{\mathbb{V}\text{ar}[e_{ij}]}} ,
+\end{equation}
+donde $e_{ij}\sim SN(0,\, \sigma^{2},\, \lambda_{i})$. Es decir, si $\tilde{y}_{ij}$ es la respuesta en escala original, se modela $\log(\tilde{y_{ij}}) \equiv y_{ij}$. Ahora, ya que centramos los parámetros de localidad y escala, garantizamos que $\mathbb{E}[y_{ij}] = \mu_{i} + \boldsymbol{x}_{ij}^{T}$ y $\mathbb{V}\text{ar}[y_{ij}] = \sigma^{2}$. A diferencia del modelo anterior, aquí se estima un parámetro de forma para cada área pequeña, de este modo se obtiene un resultado similar a incorporar un efecto aleatorio para cada región, sin embargo, se prioriza la estimación del parámetro de asimetría para cada región; $\mu_{i}$ es un intercepto para cada área. Esta representación es más simple que el modelo de \textcite{BHF-SN}, ya que no incorporamos la estructura de errores anidados, es decir, efectos aleatorios, y no es necesario recurrir a la familia CSN.
+
+Finalmente, el último ingrediente que se considera es el paradigma Bayesiano. Para esta aplicación en particular, permite generar resultados más ricos en contenido que el tratamiento frecuentista, ya que es posible estimar fácilmente funciones de interés a partir de la muestra \underline{a posteriori}. Sin embargo, el costo de oportunidad es la complejidad computacional\footnote{No obstante, no siempre es el caso, por ejemplo, con modelos conjugados o simples.} y la necesidad de especificar distribuciones \underline{a priori}, y que de acuerdo a la elección de estas, conduce a seguir un enfoque Bayesiano objetivo o no objetivo. Aquí se propone un enfoque objetivo con el fin de generar resultados reproducibles e imparciales. El vector de parámetros de interés es $\boldsymbol{\theta}=(\rho_{1:M}, \sigma^{2}, \mu_{1:M}, \boldsymbol{\beta})$, el modelo propuesto admite la siguiente estructura jerárquica
+
+% Creo que podemos reducir esta parte
+\begin{comment}
+El vector de parámetros de interés es
+\begin{equation}
+\boldsymbol{\theta} = \big(\rho_{1},\, \ldots, \, \rho_{M},\, \sigma^{2},\, \mu_{1},\, \ldots,\, \mu_{M},\, \boldsymbol{\beta}\big),
+\end{equation}
+y es de dimensión $2M+p+1$. Dado que la novedad principal de este modelo radica en la estimación de los parámetros de forma/correlación $\rho_{i}$ de cada región, podemos ordenar los elementos del vector $\boldsymbol{\theta}$ de acuerdo a su relevancia de estudio, por ejemplo
+\begin{align}
+\rho_{1} \succeq \rho_{2} \succeq \ldots \succeq \rho_{M} \succ \sigma^{2} \succ \mu_{1} \succeq \mu_{2} \succeq \ldots \succeq \mu_{M} \succeq \boldsymbol{\beta},
+\end{align}
+\textcite{Araceli} obtuvo la distribución \underline{a priori} de referencia\footnote{Esta \underline{a priori} maximiza la información faltante entre los datos observados y el modelo paramétrico asumido, mediante la divergencia Kullback-Leibler, a la vez que fija el orden o importancia de los parámetros. Para más información, consulte \textcite{bernardo:1992}.} para este modelo, y encontró que es proporcional a
+\begin{align*}
+p(\rho_{1},\, \ldots,\, \rho_{M},\, \sigma^{2},\, \mu_{1},\, \ldots,\, \mu_{M},\, \boldsymbol{\beta}) &\propto \frac{1}{\sigma^{2}} \prod_{i=1}^{M}\frac{\sqrt{1+\rho^{2}_{i}}}{1-\rho^{2}_{i}},
+\end{align*}
+% es decir, $\rho_{1:M}$, $\sigma^{2}$, $\boldsymbol{\mu}_{1:M}$ y $\boldsymbol{\beta}$ son independientes \underline{a priori}, además de que la distribución es uniforme o plana en $\boldsymbol{\mu}_{1:M}$ y $\boldsymbol{\beta}$. Motivados por esto último, es posible emplear una densidad \underline{a priori} en estos parámetros que nos resulte de mayor utilidad.
+de este modo, el modelo propuesto admite la siguiente estructura jerárquica:
+\end{comment}
+
+\begin{equation}
+\label{eq:modelo-jerarquico}
+\begin{aligned}
+y_{ij} \mid \rho_{i},\, \sigma^{2},\, w_{i},\, \mu_{i},\, \boldsymbol{\beta} &\sim N\big(\mu_{i} - \boldsymbol{x}_{ij}^{T}\boldsymbol{\beta} - w\rho_{i} + \frac{\sigma\sqrt{\frac{2}{\pi}\rho_{i}^{2}}}{\sqrt{1-\frac{2}{\pi}\rho_{i}^{2}}},\, \frac{\sigma^{2}(1-\rho_{i}^{2})}{\sqrt{1-\frac{2}{\pi}\rho_{i}^{2}}}\big) \\
+w_{i} \mid \rho_{i},\, \sigma^{2} &\sim NT\big(0,\, \frac{\sigma^{2}}{\sqrt{1-\frac{2}{\pi}\rho_{i}^{2}}}\big) \\
+p(\sigma^{2},\, \rho_{1},\, \ldots,\, \rho_{M}) &\propto \frac{1}{\sigma^{2}} \prod_{i=1}^{M}\frac{\sqrt{1+\rho_{i}^{2}}}{1-\rho_{i}^{2}} \\
+p(\mu_{1},\, \ldots,\, \mu_{M}) &\propto 1 \\
+% p(\mu_{1},\, \ldots,\, \mu_{M}) &= N_{M}(\mu_{0}\boldsymbol{1}_{M},\, \sigma^{2}_{\mu}I_{M}) \\
+% \mu_{0} &\sim N(0,\, 100^{2}) \\
+% \sigma_{\mu}^{2} &\sim \text{InvGamma}(0.001,\, 0.001) \\
+p(\boldsymbol{\beta} \mid \gamma_{1:p}) &\propto\prod_{k=1}^{p}\text{MixNorm}(\beta_{k} \mid 0,\, \tau^{2}c^{2},\, 0,\, c^{2},\, \gamma_{k}) \\
+p(\gamma_{1:p}) &= \prod_{k=1}^{p} \text{Be}(\gamma_{k} \mid 0.5,\, 0.5) ,
+\end{aligned}
+\end{equation}
+% depende de $\mu_{0}$ y $\sigma^{2}_{\mu}$, los cuáles se aprenden a partir de todos los datos, de este modo, los ${\mu}_{1:M}$
+Además de centrar la media y varianza, ya se empleó el método de truncamiento oculto para expresar la distribución de $y_{ij}$. La \underline{a priori} en $\rho_{1:M}$ consiste en la distribución de referencia o mínimamente informativa que obtuvo \textcite{Araceli}.\footnote{Para más información, consulte \textcite{bernardo:1992}.}
+% La \underline{a priori} en $\mu_{1:M}$ permite que sus elementos compartan información entre sí, lo cuál es útil cuando los tamaños de muestra son pequeños o incluso cero.\footnote{Esta estrategia es llamada \underline{pooling} o agrupamiento. De forma algebraica equivale a tener un efecto aleatorio en cada área pequeña, a pesar de que este no es el objetivo.}
+De acuerdo con \parencite{ssvs:1993}, la \underline{a priori} para $\boldsymbol{\beta}$ permite realizar selección de variables con búsqueda estocástica, \underline{stochastic search variable seleccion} (SSVS): a partir de la muestra \underline{a posteriori} de $\gamma_{k}$, la probabilidad de inclusión de la covariable $k$, se genera una muestra de las covariables seleccionadas mediante la simulación de una variable aleatoria indicadora o Bernoulli. Así, los modelos más prominentes tendrán mayor frecuencia de aparición. Los hiperparámetros $c$ y $\tau$ se establecen de acuerdo con algún criterio práctico, aquí se fijó $(c^{2},\, \tau^{2})$ $=$ $(1/300^{2},\, 3000^{2})$. Lo que significa \underline{a priori} que una estimación de $\beta_{k}$ igual a cero será generada por $N(0, 1/300^{2})$, mientras que una estimación diferente de cero será generada por $N(0, 100)$.
+
+\begin{comment}
+para $\mu_{1:M}$ se propone la siguiente estructura jerárquica:
+\begin{align}
+\begin{aligned}
+p(\mu_{1},\, \ldots,\, \mu_{M}) &= N_{M}(\mu_{0}\boldsymbol{1}_{M},\, \sigma^{2}_{\mu}I_{M}) \\
+\mu_{0} &\sim N(0,\, 10^2) \\
+\sigma^2_{\mu} &\sim \text{InvGamma}(0.001,\, 0.001),
+\end{aligned}
+\end{align}
+la cuál tiene una contribución numérica o algebraica, mas no conceptual, equivalente a la de un efecto aleatorio en cada área pequeña. La motivación de esta estructura jerárquica es permitir que los parámetros $\mu_{i}$ tomen información de otras áreas para mejorar la inferencia (\underline{pooling}) cuando en alguna región no se tengan observaciones ($n_{i}=0$). Guiados por un enfoque objetivo, se aplica el principio de razón insuficiente en los hiperparámetros $\mu_{0}$ y $\sigma^{2}_{\mu}$, y como resultado se les asignan densidades planas.
+
+Por otro lado, se asigna la siguiente \underline{a priori} para $\boldsymbol{\beta}$ que permite realizar selección de variables:
+\begin{align}
+p(\boldsymbol{\beta} \vert c_{1:p},\, \tau_{1:p}) &=  \prod_{k=1}^{p} \text{MixN}(\beta_{k} \mid 0,\, \tau^{2}_{k},\, 0,\, \tau^{2}_{k}c^{2}_{k},\, \gamma_{k}),
+% \prod_{i=1}^{M} \text{MixN}(\mu_{i} \mid 0,\, \tau^{2},\, 0,\, \tau^{2}c^{2},\, \gamma_{i}) \,
+% p(\mu_{1},\, \ldots,\, \mu_{M},\, \boldsymbol{\beta} \vert c_{i},\, \tau_{i}) &= \prod_{i=1}^{M} \gamma_{i}N(\mu_{i} \vert c_{i} \tau_{i}) + (1-\gamma_{i})N(\mu_{i} \vert \tau_{i}) \, \prod_{k=1}^{p} \gamma_{k}N(\beta_{k} \vert c_{k} \tau_{k}) + (1-\gamma_{k})N(\beta_{k} \vert \tau_{k}),
+\end{align}
+donde $\text{MixN}(x \mid \mu_{1},\, \sigma^{2}_{1},\, \mu_{2},\, \sigma^{2}_{2},\, \gamma)$ $=$ $\gamma N(x \mid \mu_{1}, \sigma^{2}_{1}) + (1-\gamma) N(x \mid \mu_{2}, \sigma^{2}_{2})$. Note que cada término corresponde a la mezcla de normales que se muestra en la \autoref{fig:ssvs-prior}. Este método es análogo al uso de una \underline{a priori} del tipo \underline{spike-slab}.
+%  donde se ha reemplazado el pico (delta de Dirac) por una densidad continua.
+Se introduce el parámetro $\gamma_{k}\in(0,\, 1)$, el cuál modela la probabilidad de inclusión de cada $\beta_{k}$. Este método fue propuesto para el muestreador de Gibbs \parencite{ssvs:1993} y se denominó \underline{Stochastic Search Variable Seleccion} (SSVS), selección de variables con búsqueda estocástica. En este caso, a partir de la muestra \underline{a posteriori} de $\gamma_{k}$, se genera una muestra de las covariables seleccionadas, digamos, mediante la simulación de una variable aleatoria indicadora o Bernoulli. Así, los modelos `más prominentes' tendrán mayor frecuencia de aparición. Para completar la especificación de la \underline{a priori} SSVS, es necesario asignar una densidad para $\gamma_{1:p}$, una alternativa objetiva, basada en el principio de razón insuficiente, es asignar igual probabilidad para todos los valores de $\gamma_{k}$, es decir, una densidad uniforme. Luego, una alternativa simple es asumir que $\gamma_{k}$ y $\gamma_{k'}$ son independientes \underline{a priori}, lo cuál nos permite escribir
+\begin{align}
+p(\gamma_{1:p}) &= \prod_{k=1}^{p} \text{Be}(\gamma_{k} \mid 1,\, 1),
+\end{align}
+aunque en la práctica la inclusión de $\beta_{k}$ pueda afectar la inclusión de $\beta_{k'}$, omitimos este hecho.
+
+La \underline{a priori} SSVS también depende de los hiperparámetros $c_{k}$ y $\tau_{k}$ que de acuerdo con \textcite{ssvs:1993}, pueden obtenerse a partir de significancia práctica: por ejemplo, la estimación $\beta_{k}$ tiene alta probabilidad de estar en el intervalo $(-3\tau_{k},\, 3\tau_{k})$, por lo que $\tau_{k}$ puede fijarse estableciendo el valor de $\tau_{k}$ en el cuál se decide considerar la estimación $\beta_{k}$ como diferente de cero; dado que la variable objetivo se encuentra en escala logaritmo, la interpretación de $\beta_{k}$ es en términos de porcentajes, así, desde un punto de vista práctico, fijamos este umbral como $3\tau_{k} = 1\%$, por lo que $\tau_{k} = 1/300$. Se estandarizan las covariables para que estén en escalas similares, por lo que únicamente se requiere una tupla $(c^{2},\, \tau^{2})$, la cuál se fija como $(1/300^{2},\, 1500^{2})$, es decir, las estimaciones diferentes de cero serán generadas por la densidad $N(0,\, \tau^{2}c^{2}=25)$. No se asigna esta \underline{a priori} en los parámetros $\mu_{1:M}$ ya que siempre se desea incluirnos en el modelo.
+\end{comment}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.45\linewidth]{Figuras/dag-logsn-final.png}
+\caption[]{Grafo dirigido acíclico que corresponde a la representación jerárquica del modelo en la Ecuación \ref{eq:modelo-jerarquico}. Las lineas punteadas relacionan parámetros e hiperparámetros. Fuente: elaboración propia.}
+\label{fig:DAG}
+\end{figure}
+
+% \begin{figure}[H]
+% \centering
+% \includegraphics[width=0.5\linewidth]{Figuras/SSVS-prior.png}
+% \caption[]{Representación de la distribución \underline{a priori} SSVS: en una realización de la distribución \underline{a posteriori}, los parámetros se estiman como (diferente de) cero si son generados por la densidad más concentrada (plana). Fuente: elaboración propia.}
+% \label{fig:ssvs-prior}
+% \end{figure}
+
+El teorema o {regla de Bayes} proporciona una regla formal para actualizar el conocimiento acerca de las cantidades de interés desconocidas, es decir, los parámetros del modelo. Esta regla dice que la distribución \underline{a posteriori} es proporcional a la verosimilitud multiplicada por la información \underline{a priori}, simbólicamente
+\begin{equation}
+p(\boldsymbol{\theta} \mid \boldsymbol{y}) \propto p(\boldsymbol{y}\mid \boldsymbol{\theta}) \, p(\boldsymbol{\theta}).
+% p(\boldsymbol{\theta} \mid \text{datos}) \propto p(\text{datos}\mid \boldsymbol{\theta}) \, p(\boldsymbol{\theta}).
+\end{equation}
+A partir de la representación jerárquica del modelo en la Ecuación \ref{eq:modelo-jerarquico} podemos obtener, salvo una constante, la distribución \underline{a posteriori}. Para completar la especificación del modelo, señalamos que que se restringe el parámetro de correlación $\rho_{i}$ al intervalo $(0,\, 1)$, es decir que $\lambda_{i}\in(0,\infty)$; esto debido a que la distribución empírica del ingreso sugiere que está sesgado a la derecha, tal restricción también alivia costo computacional, ya que se evita explorar la mitad del soporte.
+% a dos razones principales: la distribución empírica del ingreso sugiere que está sesgado a la derecha y para aliviar el costo computacional, ya que se evita explorar la mitad del soporte.
+% Como consecuencia, esto significa que si la estimación de algún elemento de $\rho_{1:M}$ es muy pequeña, el intervalo creíble no contendrá cero, en este escenario, podemos decir que el sesgo es muy pequeño y para fines prácticos despreciable.
+
+% $\boldsymbol{y}^{s}$ es la colección de todas las instancias observadas
+
+\subsection{Fuentes de información y procesamiento}
+\label{subsec:datos}
+
+Las estimaciones con modelos de regresión en áreas pequeñas se realizaron empleando datos oficiales: el Censo 2020 y la ENIGH 2025. Esta última consta de diecisiete productos o tablas: viviendas, hogares, población, gastos monetarios y no monetarios en los hogares, entre otras.
+% En general, la organización y contenido de estas tablas no son en esencia diferentes a la edición anterior, salvo actualización de ciertas variables.
+Así mismo, la desagregación más pequeña en estas tablas es a nivel vivienda, seguido por los hogares y finalmente se encuentra la población. Por su parte, se dispone de datos del Censo hasta nivel de hogar.
+
+Para actualizar el conjunto de datos de hogares con la información proveniente de la ENIGH 2024, fue necesario realizar ligeros ajustes al código Stata que genera las tablas
+% con la información necesaria
+para realizar la MMP municipal de la pobreza\footnote{Pobreza a nivel municipal: \url{https://www.coneval.org.mx/Medicion/Paginas/Pobreza-municipio-2010-2020.aspx}}\footnote{MMP estatal 2020 (Coneval): \url{https://www.coneval.org.mx/Medicion/MP/Paginas/Pobreza_2022.aspx}}\footnote{MMP 2024 estatal (INEGI): \url{https://www.inegi.org.mx/desarrollosocial/pm/}}. De este modo, el conjunto de datos conformado por la variable objetivo e información de covariables auxiliares (conteos, indicadores, categorías) fue generado de acuerdo a los mismos criterios que el Coneval usó en el año 2020 para la medición municipal de la pobreza. 
+
+Tras integrar las fuentes de información, el conjunto de datos de la Ciudad de México se compone de 79,881 observaciones a nivel hogar, de las cuáles únicamente se tiene registro del ICTPC en 2,329 hogares adicionales. La base de datos está compuesta de 52 covariables continuas (conteos, porcentajes, categorías ordenadas), 81 covariables binarias (indicadores de carencias) y 7 covariables categóricas (más de dos niveles no ordenados).
+% Previo a la selección de variables, se consideró un total de 140 covariables no redundantes en su definición: 52 covariables continuas (conteos, porcentajes, categorías ordenadas), 81 covariables binarias (indicadores de carencias) y 7 covariables categóricas (más de dos niveles no ordenados).
+Un análisis de componentes principales sobre las 52 covariables continuas -no reportado aquí- señala que es posible reducir la dimensión a 26 componentes recuperando hasta el 95.27\% de la estructura de covarianzas, por tal motivo, se empleó esta técnica. En el Cuadro \ref{tab:covariables-beta} se listan las covariables incluidas. De igual modo, se omitió el uso de las siete covariables categóricas por simplicidad en el análisis.
+% En este mismo sentido, se encontró que las covariables n65mas, nrzedme, pcmuj y  pcrzeme generan dependencias lineales casi perfectas.
+% mientras que las covariables jaesc, nrezed, jaescrl, nocup, ind\_equip\_viv\_mod, ind\_equip\_viv, pcrzed, may64, pcpeocu, pcrzeme y pcmuj tienen correlaciones mayores a 90\%.
+% La estimación del orpropuesto en la Ecuación \ref{eq:modelo-jerarquico} no requiere que la matriz diseño sea de rango completo, no obstante, se prefirió remover la colección de covariables previamente mencionadas.
+
+El ICTPC se obtiene a partir de la MMP 2024 elaborada por el INEGI, para su construcción, se considera el cociente entre ingreso corriente total (ICT) del hogar y el tamaño del hogar ajustado. El ingreso corriente se compone del ingreso monetario: salarios, transferencias, rentas, entre otros; y el ingreso no monetario: pagos y regalos en especie. La ENIGH levanta registro de los ingresos percibidos por los individuos encuestados hasta seis meses previos a la entrevista.  El ICT se obtiene sumando los ingresos monetarios y no monetarios promedio percibidos durante este periodo de tiempo por cada integrante del hogar, analizados a precios constantes del 2018. 
+% deflactados
+% en el hogar se llevan a cabo dos procesos: deflactación de los ingresos monetarios y promedio de acuerdo al tamaño del hogar. Para la primera tarea, se consideran los deflactores del año 2024, es decir, el periodo Diciembre/2023 a Diciembre/2024
+Luego, para obtener el ICTPC, se reescala el ICT de acuerdo al tamaño del hogar ajustado, esto es, a cada integrante del hogar se le asigna un peso entre (0, 1) de acuerdo al grupo etario al que pertenece, estos pesos están distribuidos como se indica en el Cuadro \ref{tab:tamaño_ajustado}
+\begin{table}[H]
+\centering
+\caption[]{Fuente: elaboración propia con información del programa de cómputo de la MMP 2024.}
+\label{tab:tamaño_ajustado}
+\begin{tabular}{ll}
+\hline
+Tamaño ajustado & Condición \\
+\hline
+0.7031 & Menor de seis años \\
+0.7382 & Mayor de seis y menor de trece años \\
+0.7057 & Mayor de trece años y menor de diecinueve años \\
+0.9945 & Mayor de veinte años y datos perdidos \\
+1.000 & Único integrante del hogar \\ 
+\hline
+\end{tabular}
+\end{table}
+
+% ♥
+
+\subsection{Ruta de trabajo}
+% este nombre es provicional
+
+Como se mencionó previamente, el objetivo de los modelos en áreas pequeñas es producir estimaciones para aquellas regiones con tamaños de muestra insuficientes para realizar estimación directa, e incluso donde no se dispone de observaciones sobre la variable objetivo. No obstante, en este caso se tienen observaciones para todos los $M=16$ dominios. Por tanto, en este escenario se propuso la siguiente ruta de trabajo:
+\begin{itemize}
+\item Entrenar al modelo con información de catorce regiones y predecir las dos restantes. De forma concreta, se propone predecir el log-ICTPC para Miguel Hidalgo y Milpa Alta. De acuerdo con el Cuadro \ref{tab:descripcion_alcaldia}, en estas dos demarcaciones se registra los ICTPC promedio más grande y pequeño.
+% de esta manera es posible comparar los pronósticos con valores reales a fin de evaluar su desempeño.
+\item Repetir el paso anterior con el método Hamiltoniano Monte Carlo (HMC) a fin de comparar las métricas de ajuste y el tiempo de ejecución promedio.\footnote{HMC es un método de muestreo de la \underline{a posteriori} basado en \underline{Markov Chain Monte Carlo} (MCMC), la alternativa Bayesiana usual.}
+\item Ajustar el modelo con todas las observaciones disponibles a fin de calcular y reportar estimaciones \underline{a posteriori}; además, con esta muestra aproximada es posible generar otros productos relevantes como medidas de desigualdad y estimación del porcentaje de la población con ICTPC por debajo de la línea de pobreza.
+% En este caso, como se dispone de información en todas las regiones, fijamos $\mu_{0}=0$ y $\sigma^{2}_{\mu}=100^{2}$ en la Ecuación \ref{eq:modelo-jerarquico}, es decir, no se emplea la estrategia de agrupamiento.
+\end{itemize}
+
+Cuando se tiene registro de observaciones en la región $i$ ($n_{i}>0$), el pronóstico de $h(y_{ij}^{\star})$ se genera a partir de la muestra \underline{a posteriori} e integración Monte Carlo como:
+\begin{align}
+p(h(y_{ij}^{\star}) \mid \boldsymbol{y}^{s}) &= \int p(h(y_{ij}^{\star}) \mid \boldsymbol{\theta}) \, p(\boldsymbol{\theta} \mid \boldsymbol{y}^{s}) \, d\boldsymbol{\theta} \approx \frac{1}{S} \sum_{k=1}^{S} h(p(y_{ij}^{\star} \mid \boldsymbol{\theta}^{(k)})),
+\end{align}
+donde $p(y_{ij}^{\star} \mid \boldsymbol{\theta})$ es el modelo muestral, es decir, el mismo mecanismo estocástico propuesto para generar a los datos $\boldsymbol{y}^{s}$, y $S$ denota el número de muestras \underline{a posteriori}. No obstante, si $n_{i}=0$, el pronóstico de $y_{ij}^{\star}$ presenta un desafío mayor, ya que si bien $\sigma^{2}$, y $\boldsymbol{\beta}$ toman información directamente de otras áreas pequeñas, los efectos a nivel de área $\rho_{i}$ únicamente son informados de manera indirecta, lo cuál puede ocasionar que los parámetros se encojan o bien colapsen hacia los límites de su soporte. En este escenario, la alternativa usual es realizar agrupamiento o \underline{pooling} por medio de una estructura jerárquica en los parámetros propios de cada región.
+% , como en la Ecuación \ref{eq:modelo-jerarquico}.
+
+Por otro lado, para calcular los porcentajes de la población por debajo de las líneas de pobreza, dado el pronóstico de los $y_{ij}^{\star}$ provenientes del censo, se identifica a los hogares con ingresos inferiores a las líneas de pobreza de acuerdo al ámbito, urbano o rural, y a continuación se multiplica el tamaño del hogar por su factor de expansión asociado. Al sumar este atributo, se obtiene la medición municipal del total de personas con esta carencia.
+% De este modo, se obtiene una estimación del total poblacional con vulnerabilidad por ingresos, con la particularidad de que esta medición está a nivel municipal.
+Sólo se tomó en cuenta los pronósticos generados a partir de la información del Censo 2020, es decir que se excluyó a los valores del ICTPC que brinda la MMP 2024, ya que los factores de expansión de ambas fuentes de información representan a toda la ciudad: en otras palabras, no se duplicó la información.
+
+% Nota: quizás pueda ponerse esto en las conclusiones, bueno una versión resumida:
+% Cuando no se tiene información en todas las regiones de estudio, es recomendable calibrar o reponderar los factores de expansión para mejorar la precisión estadística, sin embargo, en este caso se contó con información completa de las $M=16$ regiones y esta técnica no se llevó a cabo. Por otro lado, el Coneval realizaba ajustes a los totales poblacionales de cada región a fin de que la MMP a nivel municipal coincidiera con la medición estatal, así mismo, dado que en el Censo 2020 se omitieron algunos registros con datos nulos, la suma de los factores de expansión en esta fuente de datos no suma al total poblacional de la entidad en el año 2020. En este mismo sentido, quizás sería posible calibrar los factores de expansión a fin de incluir la información de la MMP 2024 para calcular el porcentaje de la población bajo alguna línea de pobreza, no obstante, no se exploró esta alternativa.
+
+\section{Principales hallazgos}
+\label{sec:resultados}
+
+% En esta sección se presentan los resultados más relevantes obtenidos con el ajuste del modelo propuesto. 
+
+\subsection{Análisis descriptivo}
+
+En la Figura \ref{fig:hist-log-ictpc} se muestra la densidad estimada del log-ICTPC, en la izquierda se agrupan los datos de toda la Ciudad y en la derecha se agrupan de acuerdo al ámbito (urbano y rural). Los datos de toda la ciudad indican que la variable respuesta está sesgada hacia la derecha. Por otro lado, cuando clasificamos de acuerdo al tipo de ámbito, el conjunto de  hogares urbanos exhiben mayor sesgo, es decir, se observan valores más grandes, mientras que los ingresos en los hogares rurales están más concentrados.
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}{0.45\linewidth}
+\includegraphics[width=\linewidth]{Figuras/dist-log-ict.png}
+\caption{}
+\end{subfigure}
+\begin{subfigure}{0.45\linewidth}
+\includegraphics[width=\linewidth]{Figuras/dist-log-ict-ambito.png}
+\caption{}
+\end{subfigure}
+\caption[]{Estimación por kernel (suavizado) de la densidad empírica del logaritmo natural de la respuesta (log-ICTPC) e histograma de probabilidad. Se omitieron tres observaciones asociadas a ingresos pequeños (52.66, 187.71 y 367.30 pesos mexicanos). Fuente: elaboración propia.}
+\label{fig:hist-log-ictpc}
+\end{figure}
+
+En el Cuadro \ref{tab:descripcion_alcaldia} se muestran estadísticos resumen básicos sobre el ICTPC por alcaldía y por ámbito, notamos que sólo en las demarcaciones Milpa Alta, Tláhuac, Tlalpan y Xochimilco, se tiene registro de hogares que pertenecen al ámbito rural, sumando a un total de 553 hogares, el 21.8\% con respecto al total de hogares encuestados (2,329). En la Cuadro \ref{tab:descripcion_ambito}, se muestran los estadísticos resumen agrupados de acuerdo al tipo de ámbito; por ejemplo, la desviación estándar en el ámbito rural es de aproximadamente 17,800 pesos mexicanos, mientras que en el ámbito rural es de 4,000. Así, pese a que el ICTPC en este ámbito sea en promedio menor, tienen menos dispersión. Sin embargo, de acuerdo con el índice de Gini, mayor dispersión no necesariamente implica que exista un mayor grado de desigualdad.
+
+\begin{table}[H]
+\caption{Estadísticos resumen del ICTPC por alcaldía y ámbito. Fuente: elaboración propia a partir de información de la ENIGH 2024.}
+\label{tab:descripcion_alcaldia}
+\centering
+\begin{tabular}{ll *{6}{r}}
+\hline
+Alcaldia & Ámbito & Mínimo & Mediana & Media & Máximo & D. est. & $n_{i}$ \\
+\hline
+Azcapotzalco & Urbano & 2102.456 & 12090.792 & 16910.051 & 114668.00 & 16878.831 & 111\\
+Azcapotzalco & Rural &  &  &  &  &  & \\
+Coyoacán & Urbano & 1551.186 & 11696.878 & 14677.289 & 83211.33 & 12202.847 & 105\\
+Coyoacán & Rural &  &  &  &  &  & \\
+Cuajimalpa de Morelos & Urbano & 3177.718 & 8461.970 & 14948.206 & 118785.32 & 19527.767 & 53\\
+Cuajimalpa de Morelos & Rural &  &  &  &  &  & \\
+Gustavo A. Madero & Urbano & 781.046 & 7787.525 & 10774.117 & 68570.14 & 9824.513 & 252\\
+Gustavo A. Madero & Rural &  &  &  &  &  & \\
+Iztacalco & Urbano & 631.123 & 8913.196 & 13545.988 & 61666.93 & 12877.532 & 105\\
+Iztacalco & Rural &  &  &  &  &  & \\
+Iztapalapa & Urbano & 187.717 & 6073.853 & 8171.228 & 48248.66 & 7074.950 & 349\\
+Iztapalapa & Rural &  &  &  &  &  & \\
+La Magdalena Contreras & Urbano & 1504.451 & 5995.553 & 10735.292 & 72000.85 & 12073.719 & 68\\
+La Magdalena Contreras & Rural &  &  &  &  &  & \\
+Milpa Alta & Urbano & 1277.369 & 6171.656 & 7005.241 & 21981.60 & 4342.122 & 31\\
+Milpa Alta & Rural & 529.397 & 4949.803 & 5483.564 & 17037.63 & 2809.900 & 227\\
+Álvaro Obregón & Urbano & 1564.368 & 9434.721 & 13817.397 & 118931.95 & 14118.201 & 207\\
+Álvaro Obregón & Rural &  &  &  &  &  & \\
+Tláhuac & Urbano & 1245.704 & 7960.860 & 8400.618 & 21017.26 & 4244.966 & 52\\
+Tláhuac & Rural & 2531.590 & 5178.865 & 6949.424 & 29950.02 & 5877.352 & 23\\
+Tlalpan & Urbano & 2163.907 & 9171.878 & 13563.610 & 65103.11 & 12886.281 & 117\\
+Tlalpan & Rural & 720.764 & 5180.475 & 6142.782 & 21935.70 & 3720.346 & 162\\
+Xochimilco & Urbano & 1430.432 & 6970.185 & 10052.865 & 56342.32 & 9781.255 & 87\\
+Xochimilco & Rural & 1069.667 & 4786.025 & 6545.860 & 29559.91 & 5240.275 & 141\\
+Benito Juárez & Urbano & 3741.365 & 20065.175 & 25167.655 & 176719.22 & 22441.338 & 135\\
+Benito Juárez & Rural &  &  &  &  &  & \\
+Cuauhtémoc & Urbano & 921.870 & 8436.753 & 17636.413 & 313206.74 & 35445.246 & 115\\
+Cuauhtémoc & Rural &  &  &  &  &  & \\
+Miguel Hidalgo & Urbano & 2290.712 & 17156.079 & 25668.338 & 132651.56 & 23268.993 & 96\\
+Miguel Hidalgo & Rural &  &  &  &  &  & \\
+Venustiano Carranza & Urbano & 52.668 & 7880.444 & 15085.567 & 297123.05 & 32880.344 & 101\\
+Venustiano Carranza & Rural &  &  &  &  &  & \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\caption{Estadísticos resumen del ingreso corriente total per cápita por alcaldía y ámbito. Fuente: Elaboración propia con información de la ENIGH 2024.}
+\label{tab:descripcion_ambito}
+\centering
+\begin{tabular}{lrrrrrr}
+\hline
+Ámbito & Minimo & Mediana & Media & Maximo & D. est. & $n_{i}$ \\
+\hline
+Urbano & 52.668 & 8520.740 & 13769.613 & 313206.74 & 17793.618 & 1984\\
+\hline
+Rural & 529.397 & 5032.302 & 6008.504 & 29950.02 & 3979.968 & 553\\
+\hline
+\end{tabular}
+\end{table}
+
+% Hacer histogramas de acuerdo a la alcaldia
+% \begin{figure}[H]
+% \centering
+% \includegraphics[width=0.5\linewidth]{Figuras/Box-Ambito.png}
+% \caption[]{Gráfico de violín (cajas y estimación de la densidad kernel) del log-ingreso corriente total per cápita para los ábitos urbano y rural. Fuente: Elaboración propia con información de la ENIGH 2024.}
+% \label{fig:descripcion-ambito}
+% \end{figure}
+
+\subsection{Precisión y tiempo de ejecución}
+
+El ajuste HMC se ejecutó con relativamente pocas iteraciones MCMC (10,000 de \underline{burn-in} y 2,000 iteraciones de muestreo con \underline{thin} de 2), generando 1,000 muestras de la \underline{a posteriori}. Para el método BV también se generó una muestra de tamaño 1,000.
+% Se asignaron $75,000$ iteraciones de optimización para el método BV
+En la Figura \ref{fig:obs-fit-vb-hmc} se grafican los valores observados contra los ajustados obtenidos con el método BV y HMC en escala logaritmo, además de una recta con su tendencia general junto a la identidad: si la predicción fuera perfecta, todos los puntos caerían sobre esta línea.
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}{0.45\textwidth}
+\includegraphics[width=\linewidth]{Figuras/LogSN-CDMX-vb.png}
+\caption{}
+\end{subfigure}
+\begin{subfigure}{0.45\textwidth}
+\includegraphics[width=\linewidth]{Figuras/LogSN-CDMX-hmc.png}
+\caption{}
+\end{subfigure}
+\caption[]{Valores observados vs valores ajustados con el modelo propuesto y usando el método BV (izquerda) y HMC (derecha). El valor de la correlación de Pearson es de 0.7935 para el método BV y 0.7876 para el método HMC. Fuente: elaboración propia.}
+\label{fig:obs-fit-vb-hmc}
+\end{figure}
+
+En el Cuadro \ref{tab:metricas} se calculan algunas métricas básicas sobre el desempeño de ambos modelos. El error absoluto medio (MAE) señala las unidades en que las predicciones están erradas, la raíz del error cuadrado medio (RMSE) se interpreta de forma similar al MAE, pero añade más penalización a los errores grandes. El error porcentual absoluto medio (MAPE) indica el porcentaje promedio en que los valores ajustados se alejan de los valores reales. El método HMC muestra valores grandes de estas métricas debido a que el muestreo no ha convergido. Esto ilustra la eficiencia del método BV en términos del tiempo de ejecución y precisión.
+
+% En general, ambos modelos tienen valores similares en cada uno de estos criterios de ajuste.
+
+El método HMC se considera como un algoritmo MCMC eficiente, ya que incorpora información del gradiente de la función de log-verosimilitud \parencite{stan-ref:2025}; sin embargo, en este ajuste es aproximadamente 80 veces más lento que la aproximación BV, sin una mejora sustancial de las métricas de ajuste.
+% Las estimaciones de los parámetros $\mu_{8}$ y $\mu_{15}$ son consistentes en ámbos modelos, no obstante,
+En las estimaciones del parámetro de forma, se obtuvo $\tilde{\rho}_{8}=0.998$ y $\tilde{\rho}_{15}0.790$ para el método HMC, frente a $\tilde{\rho}_{8}=0.125$ y $\tilde{\rho}_{15}=0.172$ obtenidas con el método variacional. Sin presencia de información adicional, el método BV encoge este parámetro, lo que genera predicciones más simétricas para estas alcaldías.
+% Hablar de esto
+% De igual modo, la estimación de $\mu$ se encogen con el método BV.
+
+\begin{table}[H]
+\centering
+\caption[]{Métricas de ajuste en la escala original. Fuente: elaboración propia.}
+\label{tab:metricas}
+\begin{tabular}{llccc}
+\hline
+Métrica & Definición & Método VB & Método HMC  \\
+\hline \\
+% Corr. & $\dfrac{\sum_{i=1}^{M}\sum_{j=1}^{N_{i}}(y_{ij}-\bar{y_{ij}})\,(\tilde{y}_{ij}-\bar{\tilde{y}}_{ij})}{\sqrt{\sum_{i=1}^{M}\sum_{j=1}^{N_{i}}(y_{ij}-\bar{y_{ij}})^{2}\,\sum_{i=1}^{M}\sum_{j=1}^{N_{i}}(\tilde{y}_{ij}-\bar{\tilde{y}}_{ij})^{2}}}$ & 0.8017 & \\
+Corr. & $\dfrac{\sum_{i,\, j}(y_{ij}-\bar{y_{ij}})\,(\tilde{y}_{ij}-\bar{\tilde{y}}_{ij})}{\sqrt{\sum_{i,\, j}(y_{ij}-\bar{y_{ij}})^{2}\,\sum_{i,\, j}(\tilde{y}_{ij}-\bar{\tilde{y}}_{ij})^{2}}}$ & 0.7928 & 0.7540  \\ \\
+MAE & \(\displaystyle\sum_{i=1}^{M}\sum_{j=1}^{N_{i}}\mid{y}_{ij}-\tilde{y}_{ij}\mid \) & 5,411.4858 & 6297.2901 \\ 
+RMSE & \(\displaystyle\big(\sum_{i=1}^{M}\sum_{j=1}^{N_{i}}({y}_{ij}-\tilde{y}_{ij})^{2}\big)^{1/2} \) & 9,981.7878 & 10,732.6546 \\
+MAPE & \(\displaystyle\frac{1}{\sum_{i} N_{i}}\sum \limits_{i=1}^{M}\sum_{j=1}^{N_{i}}\frac{\vert y_{ij}-\tilde{y}_{ij} \vert}{y_{ij}}\) & 76.88\% & 94.55\% \\
+Tiempo & & 66 s & 2890 s\\
+\hline
+\end{tabular}
+\end{table}
+
+% Cabe mencionar que la estimación $\tilde{\rho}_{15}$ obtenida con HMC parece la única plausible: el resto de estimaciones o bien está encogida o bien está en el límite del soporte del parámetro.
+
+\subsection{Estimaciones de los parámetros}
+
+A continuación se presentan las medias de las estimaciones, los errores estándar y los intervalos creíbles basados en la aproximación Bayesiana variacional (BV) de la distribución \underline{a posteriori}. En el Cuadro \ref{tab:estimaciones} se muestran las estimaciones de los parámetros $\rho_{1:16}$, $\sigma^{2}$ y $\mu_{1:16}$.
+% En la Figura \ref{fig:estimaciones-rho-mu} se visualizan los intervalos creíbles 95\% para las estimaciones de los parámetros $\rho_{1:16}$ y $\mu_{1:16}$.
+De igual modo, en el Cuadro \ref{tab:covariables-beta} se muestran las estimaciones de los parámetros $\boldsymbol{\beta}$, junto a su porcentaje de aparición en la muestra \underline{a posteriori}. Por cuestiones prácticas, únicamente se listan las covariables cuya frecuencia de aparación es mayor al 75\%, en cuyo caso, corresponde a 77 covariables.
+
+% Notamos que $\tilde{\rho}_{16}=0.1246$ es la estimación más pequeña del parámetro de correlación
+
+% \begin{table}[H]
+% \caption{Elaboración propia basada en la muestra \underline{a posteriori}.}
+% \label{tab:estimaciones}
+% \centering
+% \begin{tabular}[t]{l|r|r|r|r}
+% \hline
+% Parametro & Media & Error est. & 0.025 \% & 0.975 \%\\
+% \hline
+% $\rho_{1}$ & 0.5903 & 0.1346 & 0.3493 & 0.8317\\
+% \hline
+% $\rho_{2}$ & 0.6994 & 0.0874 & 0.5101 & 0.8476\\
+% \hline
+% $\rho_{3}$ & 0.7406 & 0.0925 & 0.5300 & 0.8990\\
+% \hline
+% $\rho_{4}$ & 0.7363 & 0.0442 & 0.6491 & 0.8128\\
+% \hline
+% $\rho_{5}$ & 0.3139 & 0.1853 & 0.0548 & 0.7403\\
+% \hline
+% $\rho_{6}$ & 0.7142 & 0.0404 & 0.6381 & 0.7885\\
+% \hline
+% $\rho_{7}$ & 0.8222 & 0.0512 & 0.7034 & 0.9105\\
+% \hline
+% $\rho_{8}$ & 0.8580 & 0.0187 & 0.8179 & 0.8911\\
+% \hline
+% $\rho_{9}$ & 0.7603 & 0.0451 & 0.6637 & 0.8396\\
+% \hline
+% $\rho_{10}$ & 0.9185 & 0.0181 & 0.8809 & 0.9485\\
+% \hline
+% $\rho_{11}$ & 0.7784 & 0.0323 & 0.7128 & 0.8339\\
+% \hline
+% $\rho_{12}$ & 0.7254 & 0.0534 & 0.6105 & 0.8221\\
+% \hline
+% $\rho_{13}$ & 0.5778 & 0.1193 & 0.3391 & 0.7966\\
+% \hline
+% $\rho_{14}$ & 0.1750 & 0.1392 & 0.0221 & 0.5462\\
+% \hline
+% $\rho_{15}$ & 0.4787 & 0.1716 & 0.1678 & 0.8011\\
+% \hline
+% $\rho_{16}$ & 0.1194 & 0.1021 & 0.0149 & 0.4055\\
+% \hline
+% $\sigma$ & 0.6141 & 0.0088 & 0.5962 & 0.6316\\
+% \hline
+% $\mu_{1}$ & 7.5136 & 0.0551 & 7.4128 & 7.6173\\
+% \hline
+% $\mu_{2}$ & 7.4533 & 0.0545 & 7.3579 & 7.5755\\
+% \hline
+% $\mu_{3}$ & 7.5709 & 0.0750 & 7.4308 & 7.7267\\
+% \hline
+% $\mu_{4}$ & 7.4494 & 0.0355 & 7.3760 & 7.5200\\
+% \hline
+% $\mu_{5}$ & 7.3516 & 0.0600 & 7.2272 & 7.4733\\
+% \hline
+% $\mu_{6}$ & 7.4465 & 0.0311 & 7.3871 & 7.5031\\
+% \hline
+% $\mu_{7}$ & 7.5586 & 0.0584 & 7.4478 & 7.6818\\
+% \hline
+% $\mu_{8}$ & 7.4938 & 0.0274 & 7.4442 & 7.5494\\
+% \hline
+% $\mu_{9}$ & 7.5330 & 0.0347 & 7.4682 & 7.5988\\
+% \hline
+% $\mu_{10}$ & 7.5620 & 0.0447 & 7.4757 & 7.6429\\
+% \hline
+% $\mu_{11}$ & 7.6115 & 0.0324 & 7.5463 & 7.6747\\
+% \hline
+% $\mu_{12}$ & 7.4518 & 0.0387 & 7.3753 & 7.5279\\
+% \hline
+% $\mu_{13}$ & 7.6338 & 0.0512 & 7.5376 & 7.7389\\
+% \hline
+% $\mu_{14}$ & 7.3531 & 0.0609 & 7.2325 & 7.4648\\
+% \hline
+% $\mu_{15}$ & 7.6683 & 0.0607 & 7.5473 & 7.7865\\
+% \hline
+% $\mu_{16}$ & 7.2987 & 0.0671 & 7.1726 & 7.4237\\
+% \hline
+% \end{tabular}
+% \end{table}
+
+\begin{table}[H]
+\caption{Elaboración propia basada en la muestra \underline{a posteriori}.}
+\label{tab:estimaciones}
+\centering
+\begin{tabular}{l|l|l|l}
+\hline
+Alcaldía & Par. & {Media (Error est.)} & {Intervalo c. (2.5 \%, 97.5 \%)}  \\
+\hline
+Azcapotzalco & $\rho_{1}$ & 0.5987 (0.1384) & (0.3112, 0.8350)\\
+\hline
+Coyoacán & $\rho_{2}$ & 0.6655 (0.0996) & (0.4605, 0.8363)\\
+\hline
+Cuajimalpa de Morelos & $\rho_{3}$ & 0.7016 (0.1171) & (0.4325, 0.8913)\\
+\hline
+Gustavo A. Madero & $\rho_{4}$ & 0.7399 (0.0432) & (0.6496, 0.8143)\\
+\hline
+Iztacalco & $\rho_{5}$ & 0.3121 (0.1904) & (0.0470, 0.7545)\\
+\hline
+Iztapalapa & $\rho_{6}$ & 0.7099 (0.0391) & (0.6339, 0.7805)\\
+\hline
+La Magdalena Contreras & $\rho_{7}$ & 0.8276 (0.0495) & (0.7132, 0.9063)\\
+\hline
+Milpa Alta & $\rho_{8}$ & 0.8547 (0.0185) & (0.8179, 0.8897)\\
+\hline
+Álvaro Obregón & $\rho_{9}$ & 0.7589 (0.0454) & (0.6647, 0.8399)\\
+\hline
+Tláhuac & $\rho_{10}$ & 0.9213 (0.0175) & (0.8798, 0.9505)\\
+\hline
+Tlalpan & $\rho_{11}$ & 0.7854 (0.0329) & (0.7157, 0.8446)\\
+\hline
+Xochimilco & $\rho_{12}$ & 0.7271 (0.0512) & (0.6196, 0.8157)\\
+\hline
+Benito Juárez & $\rho_{13}$ & 0.6530 (0.0921) & (0.4633, 0.8098)\\
+\hline
+Cuauhtémoc & $\rho_{14}$ & 0.1763 (0.1427) & (0.0193, 0.5465)\\
+\hline
+Miguel Hidalgo & $\rho_{15}$ & 0.6480 (0.0984) & (0.4549, 0.8277)\\
+\hline
+Venustiano Carranza & $\rho_{16}$ & 0.1626 (0.1131) & (0.0275, 0.4492)\\
+\hline
+ & $\sigma$ & 0.6141 (0.0080) & (0.5989, 0.6299)\\
+\hline
+ & $\mu$ & 8.6619 (0.0106) & (8.6410, 8.6823)\\
+\hline
+\end{tabular}
+\end{table}
+
+% \begin{figure}[H]
+% \centering
+% \begin{subfigure}{0.45\textwidth}
+% \includegraphics[width=\linewidth]{Figuras/int_rho.png}
+% \end{subfigure}
+% \begin{subfigure}{0.45\textwidth}
+% \includegraphics[width=\linewidth]{Figuras/int_mu.png}
+% \end{subfigure}
+% \caption[]{Intervalos de credibilidad aproximados para los parámetros $\rho_{1}$ a $\rho_{16}$ (izquierda) y para los parámetros $\mu_{1}$ a $\mu_{16}$ (derecha). Fuente: Elaboración propia a partir de la muestra \underline{a posteriori}.}
+% \label{fig:estimaciones-rho-mu}
+% \end{figure}
+
+
+\subsection{Medidas de desigualdad}
+
+Con la muestra \underline{a posteriori}, se genera un pronóstico de los ingresos con datos del Censo 2020, y a partir de esta, se calculan medidas de desigualdad como la curva de Lorenz y el índice de Gini. Estas dos métricas están relacionadas entre sí, ya que el índice es función del área bajo la recta de igualdad perfecta (identidad) y la curva de desigualdad. Se estiman estas medidas para los hogares de acuerdo al tipo de corte al que pertenecen: rural o urbano. Se encontró que el índice de Gini para el ámbito urbano es de 0.3679, mientras que para el ámbito rural es de 0.3113. Así mismo, el índice para ambos ámbitos es de 0.3684.
+
+% Mayor varianza no implica mayor Gini
+% A = (1, 1, 3, 4)
+% B = (1, 1, 2, 4)
+% var(A) = 2.25
+% var(B) = 2
+% Gini(A) = 0.3055
+% Gini(B) = 0.3125
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.5\linewidth]{Figuras/Lorenz-CDMX.png}
+\caption[]{Curva de Lorenz para los valores del ICTPC ajustado de acuerdo al ámbito y ponderado por los factores de expansión provenientes del Censo 2020. Fuente: elaboración propia a partir de la muestra \underline{a posteriori}.}
+\label{fig:Lorenz-CDMX}
+\end{figure}
+
+% \subsection{Porcentaje de la población con ingresos por debajo de la línea de pobreza}
+
+\subsection{Población con ingresos por debajo de las líneas de pobreza}
+
+En el Cuadro \ref{tab:porcentajes} se reportan los porcentajes de la población con ingresos por debajo de las líneas de pobreza, agrupados por alcaldía. Los porcentajes estatales estimados son de 24.38\% y 3.73\%, mientras que los porcentajes estatales oficiales registrados en la MMP 2024 de la Ciudad de México son de 24.5\% y 4.5\%.
+
+% El origen de esta discrepancia podría ser explicada por dos factores: (1) se emplea una distribución de errores diferente y en general, otra clase de modelo y (2) al momento de procesar los datos, se eliminan ciertos registros incompletos del Censo 2020.
+% No obstante, si se comparan los porcentajes por alcaldía de la MMP a nivel municipal que publicó Coneval en 2020, algunos de los porcentajes aquí reportados parecen subrepresentados en comparación con las mediciones oficiales de ese año.
+
+\begin{table}[H]
+\caption{Elaboración propia basada en la muestra \underline{a posteriori}.}
+\label{tab:porcentajes}
+\centering
+\begin{tabular}[t]{l|r|r}
+\hline
+Alcaldia & Población bajo la LPI (\%) & Población bajo la LPEI (\%) \\
+\hline
+Azcapotzalco & 12.32 & 0.74\\
+\hline
+Coyoacán & 13.38 & 2.64\\
+\hline
+Cuajimalpa de Morelos & 16.97 & 2.14\\
+\hline
+Gustavo A. Madero & 25.50 & 3.35\\
+\hline
+Iztacalco & 16.96 & 2.30\\
+\hline
+Iztapalapa & 37.28 & 6.88\\
+\hline
+La Magdalena Contreras & 30.22 & 4.28\\
+\hline
+Milpa Alta & 53.22 & 9.22\\
+\hline
+Álvaro Obregón & 22.74 & 2.73\\
+\hline
+Tláhuac & 44.46 & 7.92\\
+\hline
+Tlalpan & 24.89 & 2.88\\
+\hline
+Xochimilco & 35.17 & 5.33\\
+\hline
+Benito Juárez & 1.51 & 0.27\\
+\hline
+Cuauhtémoc & 9.93 & 0.78\\
+\hline
+Miguel Hidalgo & 5.18 & 0.28\\
+\hline
+Venustiano Carranza & 18.86 & 3.04\\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}{0.45\textwidth}
+\includegraphics[width=\linewidth]{Figuras/mapa-lpi.png}
+\caption{}
+\end{subfigure}
+\begin{subfigure}{0.45\textwidth}
+\includegraphics[width=\linewidth]{Figuras/mapa-lpei.png}
+\caption{}
+\end{subfigure}
+\caption[]{Mapa con el porcentaje de la población con ICTPC por debajo de la línea de pobreza por ingresos (LPI) en la derecha y pobreza extrema por ingresos (LPEI) en la izquierda, en las 16 alcaldías de la Ciudad. Fuente: elaboración propia basada en la muestra \underline{a posteriori}.}
+\label{fig:mapa-porcentaje-lpe-lpei}
+\end{figure}
+
+\subsection{Sesgo promedio}
+
+Una forma adicional de comparar el ajuste, es mediante el cálculo del sesgo en la estimación del ICTPC entre los valores observados y los ajustados por el modelo, agrupados de acuerdo a la alcaldía. El promedio en la diferencia absoluta de los sesgos es de 895.11 pesos mexicanos. Se resaltan los valores más grandes y pequeños tanto para los valores observados, ajustados y el promedio de la diferencia absoluta.
+
+\begin{table}[H]
+\caption{Sesgo promedio agrupado por alcaldía. Elaboración propia basada en la muestra \underline{a posteriori}.}
+\label{tab:sesgo}
+\centering
+\begin{tabular}{l|r|r|r}
+\hline
+Alcaldía & Media ICTPC observado & Media ICTPC  ajustado & Diferencia absoluta \\
+\hline
+Azcapotzalco & 16910.051 & 16274.642 & 635.409\\
+\hline
+Coyoacán & 14677.289 & 15059.292 & 382.003\\
+\hline
+Cuajimalpa de Morelos & 14948.206 & 14014.203 & 934.003\\
+\hline
+Gustavo A. Madero & 10774.117 & 10558.893 & 215.224\\
+\hline
+Iztacalco & 13545.988 & 13693.790 & 147.802\\
+\hline
+Iztapalapa & 8171.228 & 8221.276 & 50.048\\
+\hline
+La Magdalena Contreras & 10735.292 & 10436.516 & 298.776\\
+\hline
+Milpa Alta & \bfseries 5666.401 & \bfseries 6123.678 & 457.277\\
+\hline
+Álvaro Obregón & 13817.397 & 13849.550 & \bfseries 32.154\\
+\hline
+Tláhuac & 7955.585 & 8259.454 & 303.869\\
+\hline
+Tlalpan & 9254.742 & 8971.716 & 283.026\\
+\hline
+Xochimilco & 7884.059 & 8023.998 & 139.939\\
+\hline
+Benito Juárez & 25167.655 & \bfseries 24282.706 & 884.950\\
+\hline
+Cuauhtémoc & 17636.413 & 13460.428 & \bfseries 4175.985\\
+\hline
+Miguel Hidalgo & \bfseries 25668.338 & 23096.471 & 2571.867\\
+\hline
+Venustiano Carranza & 15085.567 & 12276.001 & 2809.566\\
+\hline
+\end{tabular}
+\end{table}
+
+\section{Conclusiones}
+\label{sec:conclusiones}
+
+
+Un aspecto clave sobre el modelo propuesto, es la interpretación del parámetro de forma. En este escenario, puede entenderse como una medida de la heterogeneidad o desigualdad en los ingresos dentro de una alcaldía, y con ello, de la población en esta. Debido a la dualidad de este parámetro en el modelo propuesto, puede estudiarse como correlación, es decir, de forma aproximada, valores menores a 0.5 son considerados sesgo leve, de 0.5 a 0.8 sesgo moderado, y mayores a 0.8 como sesgo grande.
+
+Las estimaciones del parámetro de correlación en el Cuadro \ref{tab:estimaciones}, indican que en las alcaldías Tláhuac (0.9204), Milpa Alta (0.8606), La Magdalena Contreras (0.8458) y Tlálpan (0.7889), se observan los valores de sesgo más grandes. Estas alcaldías se ubican al sureste, sur y suroeste de la Ciudad, y constituyen zonas periféricas. Además, tres de estas cuatro alcaldías contienen poblaciones de contextos urbanos y rurales. Así mismo, el modelo encontró que la distribución del ingreso es más simétrica en las alcaldías Venustiano Carranza (0.1638) y Cuahutémoc (0.1775), localizadas en el centro y poniente de la Ciudad.
+
+% seguida por las alcaldías Iztacalco (0.4087) y Miguel Hidalgo (0.4743). Sin embargo, estas dos últimas estimaciones reflejan incertidumbre considerable.
+
+% En términos generales, las regiones norte y céntricas de la Ciudad exhiben menos asimetría en el ICTPC.
+
+Los resultados muestran que las alcaldías con los niveles más bajos del ICTPC presentan también sesgos grandes en las estimaciones del ingreso. Este hallazgo sugiere que las estimaciones directas resultan menos confiables precisamente en los territorios más vulnerables, lo que evidencia una limitación metodológica relevante en la medición de la pobreza a escalas territoriales pequeñas. En este sentido, la aplicación de modelos en áreas pequeñas permite reducir dichos sesgos y mejorar la precisión de las estimaciones, contribuyendo a una representación más adecuada de las desigualdades territoriales del ingreso en la Ciudad de México.
+
+El hecho de que las alcaldías con mayores niveles de pobreza presentan también mayores sesgos en las estimaciones del ingreso, es consistente con la existencia de una mayor brecha salarial al interior de estos territorios. Una mayor heterogeneidad de ingresos incrementa la varianza y reduce la representatividad de las estimaciones directas.
+% particularmente en áreas con alta informalidad laboral.
+En este contexto, los modelos en áreas pequeñas contribuyen a capturar de manera más adecuada dicha heterogeneidad, mejorando la precisión de la medición del ingreso a nivel municipal.
+
+(Interpretación sobre los $\boldsymbol{\beta}$)
+
+\begin{comment}
+Con respecto a las covariables, los primeros 21 coeficientes no tienen interpretación directa ya que se trata de componentes principales. Para los indicadores binarios, se encuentra que los parámetros $\beta_{33}$, $\beta_{37}$, $\beta_{38}$, $\beta_{45}$, $\beta_{93}$ y $\beta_{104}$, tienen efectos positivos bastante grandes, y a excepción de la disposición de aire acondicionado, están relacionados con el uso y abastecimiento de agua en los hogares: disponibilidad de boiler, bomba de agua, cisterna, regadera y tinaco. De forma similar, los efectos negativos grandes de $\beta_{40}$, $\beta_{49}$, $\beta_{88}$, $\beta_{89}$ y $\beta_{98}$ parecen contraintuitivos, ya que indican la presencia de ciertos bienes; no obstante, es posible que esto se deba a un efecto la muestra, por ejemplo, el 96.33\% de los encuestados dispone de teléfono móvil, o bien, debido a dependencias condicionales entre todas las variables binarias.
+\end{comment}
+
+Por otra parte, una desventaja del método de estimación propuesto, es que puede llegar a ser sobreconfidente, es decir, reportar errores estándar pequeños e intervalos creíbles más angostos de como son en realidad. 
+% Esta implementación es efectiva cuando se conoce al menos una observación en cada región, es decir $n_{i}>0$, y cuando $n_{i}=0$, esta implementación tiende a generar pronósticos simétricos, ya que la estructura \underline{a priori} de $\rho_{i}$ no toma información de otras áreas; este caso, la inferencia es un reto que probablemente requiere de una estructura más compleja para el modelo.
+Para las regiones sin observaciones, no se dispone de información para aprender directamente el efecto que tiene el parámetro de forma, por lo que en este escenario, las estimaciones del log-ICTPC tienden a ser más simétricas. Una área de oportunidad para esta metodología, consiste en proponer una distribución \underline{a priori} que permitan compartir información acerca del parámetro de forma.
+% , similar a la \underline{a priori} para los interceptos de cada región en la Ecuación \ref{eq:modelo-jerarquico}.
+
+% conectar esta idea:
+% Sin duda, sería interesante comparar estos porcentajes con la próxima edición quinquenal de la MMP municipal.
+
+
+% La aproximación Forma Fija (FF) implementada por Stan no permite capturar de manera efectiva correlaciones entre los parámetros del modelo. Sin embargo, es posible corregir esta aproximación con muestreo de importancia suavizado de Pareto (\underline{Pareto smoothed importance sampling}, PSIS), a fin de generar estimaciones consistentes. Por defecto, la interfaz con la que se implementó el método variacional aplica está técnica de remuestreo. \textcite{cmdstanr:2025}
+
+% \begin{itemize}
+% \item Se planteó un modelo Bayesiano en áreas pequeñas para analizar el ICTPC en la Ciudad de México, cuya estructura de error se asumió log-normal sesgada. Esta distribución proporciona un forma natural de cuantificar el sesgo de la población en cada dominio o alcaldía de estudio. Se encontró que, en general, la distribución del log-ICTPC en la mayor parte de las regiones tienen un sesgo considerable, ya que su estimación está cerca de uno -el límite superior del soporte, $\rho_{i}\in(0, 1)$-.
+
+% \item Además, se midió la frecuencia de aparición \underline{a posteriori} de las covariables incluidas en el modelo, lo que proporciona un criterio para seleccionar las características más relevantes o recurrentes para el modelo.
+
+% \item Esta implementación es efectiva cuando se conoce al menos una observación en cada región, es decir $n_{i}>0$, y cuando $n_{i}=0$, esta implementación tiende a generar pronósticos simétricos, ya que la estructura \underline{a priori} de $\rho_{i}$ no toma información de otras áreas; este caso, la inferencia es un reto que probablemente requiere de una estructura más compleja para el modelo. La deficiencia principal de esta metodología es que para las regiones sin observaciones ($n_{i}=0$), no hay información para aprender el efecto que tiene este parámetro, por lo que en este escenario, las estimaciones del log-ICTPC tienden a ser más simétricas.
+% \end{itemize}
+
+
+
+% \xpatchbibmacro{date+extradate}{%
+%   \printtext[parens]%
+% }{%
+%   \setunit{\addperiod\space}%
+%   \printtext%
+% }{}{}
+
+\printbibliography
+% \nocite{*}
+
+\section*{Anexo}
+
+\section*{Lista de covariables empleadas}
+
+\begin{table}[H]
+\caption{Estimaciones y lista de covariables incluidas, únicamente
+se muestran aquellas covariables con frecuencias de aparición mayores al 75\%.
+Fuente: elaboración propia basada en la muestra \underline{a posteriori}.}
+\label{tab:covariables-beta}
+\centering
+\begin{tabular}[t]{l|l|l|l}
+\hline
+Par. (Frecuencia) & Media (Error est.) & Intervalo c. (2.5 \%, 97.5 \%) & Descripción\\
+\hline
+$\beta_{6}$ (100.00\%) & 0.0755 (0.0110) & (0.0541, 0.0962) & Número de cuartos del hogar\\
+\hline
+$\beta_{7}$ (100.00\%) & -0.1138 (0.0086) & (-0.1301, -0.0970) & Cantidad de equipamientos (tinaco boiler cisterna regadera) en el hogar\\
+\hline
+$\beta_{11}$ (100.00\%) & -0.0896 (0.0115) & (-0.1128, -0.0683) & Número de hombres en el hogar\\
+\hline
+$\beta_{14}$ (100.00\%) & -0.0584 (0.0109) & (-0.0793, -0.0373) & Número de bienes de equipamiento (regadera, tinaco, cisterna, calentador de agua, bomba de agua, aire acondicionado)\\
+\hline
+$\beta_{15}$ (100.00\%) & 0.0445 (0.0077) & (0.0302, 0.0594) & Escolaridad del jefe\\
+\hline
+$\beta_{16}$ (100.00\%) & -0.1351 (0.0114) & (-0.1585, -0.1138) & Escolaridad relativa del jefe del hogar\\
+\hline
+$\beta_{17}$ (100.00\%) & 0.1237 (0.0109) & (0.1026, 0.1439) & Edad del jefe del hogar\\
+\hline
+$\beta_{18}$ (100.00\%) & -0.1520 (0.0107) & (-0.1736, -0.1316) & Escolaridad relativa estandarizada del jefe\\
+\hline
+$\beta_{25}$ (100.00\%) & 0.2237 (0.0111) & (0.2035, 0.2454) & Número de personas con 60 años o más\\
+\hline
+$\beta_{30}$ (100.00\%) & 0.1178 (0.0110) & (0.0967, 0.1388) & Número de hijos(as) nacidos (as) vivos en el hogar\\
+\hline
+$\beta_{33}$ (100.00\%) & -0.0488 (0.0109) & (-0.0691, -0.0271) & Número de menores de 12 años en el hogar\\
+\hline
+$\beta_{36}$ (100.00\%) & -0.0954 (0.0259) & (-0.1459, -0.0448) & Número de perceptores de ingresos ocupados\\
+\hline
+$\beta_{39}$ (92.20\%) & -0.0510 (0.0416) & (-0.1369, 0.0292) & Personas con carencia en servicios de salud en el hogar\\
+\hline
+$\beta_{41}$ (90.40\%) & -0.0467 (0.0431) & (-0.1301, 0.0388) & Porcentaje de hombres en el hogar\\
+\hline
+$\beta_{42}$ (100.00\%) & 0.3439 (0.0921) & (0.1656, 0.5267) & Porcentaje de personas indígenas en el hogar\\
+\hline
+$\beta_{43}$ (100.00\%) & 0.2234 (0.0152) & (0.1927, 0.2538) & Porcentaje de menores de 12 años en el hogar\\
+\hline
+$\beta_{44}$ (100.00\%) & 0.0938 (0.0214) & (0.0528, 0.1370) & Porcentaje de mujeres en el hogar\\
+\hline
+$\beta_{46}$ (100.00\%) & 0.1022 (0.0127) & (0.0790, 0.1290) & Porcentaje de perceptores ocupados\\
+\hline
+$\beta_{47}$ (100.00\%) & 0.0591 (0.0135) & (0.0333, 0.0854) & Porcentaje de personas mayores de 16 con rezago educativo\\
+\hline
+$\beta_{48}$ (91.20\%) & -0.0493 (0.0346) & (-0.1181, 0.0159) & Porcentaje de personas menores de 16 con rezago educativo\\
+\hline
+$\beta_{52}$ (100.00\%) & 0.2021 (0.0579) & (0.0872, 0.3262) & Proxy de mortalidad infantil\\
+\hline
+$\beta_{54}$ (100.00\%) & 0.1571 (0.0150) & (0.1270, 0.1852) & Indicador de posesión de automovil en el hogar\\
+\hline
+$\beta_{58}$ (95.90\%) & 0.0594 (0.0292) & (0.0018, 0.1178) & Dispone de bomba de agua el hogar\\
+\hline
+$\beta_{59}$ (100.00\%) & -0.1162 (0.0141) & (-0.1429, -0.0883) & Dispone de calentador solar de agua el hogar\\
+\hline
+$\beta_{60}$ (90.50\%) & -0.0393 (0.0670) & (-0.1641, 0.0895) & Dispone de teléfono móvil o celular el hogar\\
+\hline
+$\beta_{61}$ (87.00\%) & 0.0325 (0.0416) & (-0.0514, 0.1096) & Hogar con todos sus integrantes mayores de 60 años (envejecido)\\
+\hline
+$\beta_{62}$ (78.50\%) & 0.0197 (0.0328) & (-0.0438, 0.0840) & Hogar nuclear con algún hijo en la PEA (en proceso de fisión)\\
+\hline
+$\beta_{63}$ (100.00\%) & 0.0498 (0.0108) & (0.0297, 0.0709) & Hogar nuclear sin hijos con sus integrantes menores a 50 años (en formación)\\
+\hline
+$\beta_{64}$ (97.30\%) & 0.1308 (0.0848) & (-0.0419, 0.2934) & Hogar nuclear con hijos menores, sin hijos en la PEA\\
+\hline
+$\beta_{65}$ (99.70\%) & -0.0716 (0.0204) & (-0.1117, -0.0328) & Dispone de cisterna el hogar\\
+\hline
+$\beta_{66}$ (95.80\%) & 0.0848 (0.1602) & (-0.2271, 0.3976) & Indicador de disponibilidad de cuarto para cocinar\\
+\hline
+$\beta_{67}$ (93.50\%) & 0.0687 (0.1134) & (-0.1488, 0.2967) & Tipo de combustible para cocinar\\
+\hline
+$\beta_{69}$ (100.00\%) & 0.2791 (0.0256) & (0.2312, 0.3283) & Dispone de al menos una computadora el hogar\\
+\hline
+$\beta_{72}$ (93.50\%) & -0.0162 (0.1150) & (-0.2469, 0.2004) & Cónyuge con rezago educativo\\
+\hline
+$\beta_{73}$ (86.10\%) & -0.0078 (0.0636) & (-0.1328, 0.1226) & Cónyuge con carencia por acceso a los servicios de salud\\
+\hline
+$\beta_{74}$ (91.50\%) & 0.0589 (0.0611) & (-0.0652, 0.1765) & Forma en que desechan la basura\\
+\hline
+$\beta_{75}$ (98.40\%) & 0.1140 (0.0574) & (-0.0035, 0.2248) & Indicador de presencia de menores de 6 a 15 años que no asisten a la escuela\\
+\hline
+$\beta_{77}$ (100.00\%) & 0.1642 (0.0116) & (0.1417, 0.1872) & Hogar compuesto\\
+\hline
+$\beta_{80}$ (98.80\%) & -0.2084 (0.1207) & (-0.4479, 0.0296) & Hogar unipersonal\\
+\hline
+$\beta_{81}$ (91.90\%) & 0.0531 (0.0704) & (-0.0846, 0.1901) & Algún adulto tuvo poca variedad en sus alimentos\\
+\hline
+$\beta_{82}$ (96.60\%) & -0.0426 (0.2398) & (-0.5278, 0.4259) & Algún adulto dejó de desayunar, comer o cenar\\
+\hline
+$\beta_{83}$ (100.00\%) & 0.1619 (0.0207) & (0.1175, 0.2006) & Algún adulto comió menos de lo que debería comer\\
+\hline
+$\beta_{85}$ (59.00\%) & -0.0034 (0.0179) & (-0.0378, 0.0298) & Algún adulto sintió hambre, pero por falta de dinero no comió\\
+\hline
+$\beta_{86}$ (93.80\%) & -0.0540 (0.1007) & (-0.2392, 0.1459) & Algún adulto comió sólo una vez al día, o dejó de comer todo un día\\
+\hline
+$\beta_{87}$ (95.60\%) & 0.0788 (0.0543) & (-0.0309, 0.1856) & Indicador de carencia de salud en el hogar\\
+\hline
+$\beta_{88}$ (93.50\%) & -0.0508 (0.0307) & (-0.1146, 0.0103) & Indicador de carencia por calidad y espacios de la vivienda\\
+\hline
+$\beta_{89}$ (100.00\%) & -0.1331 (0.0129) & (-0.1578, -0.1086) & Indicador de carencia por servicios basicos de la vivienda\\
+\hline
+$\beta_{91}$ (100.00\%) & 0.0705 (0.0140) & (0.0438, 0.0975) & Indicador de carencia de muros\\
+\hline
+$\beta_{93}$ (100.00\%) & 0.3181 (0.0229) & (0.2715, 0.3619) & Indicador de carencia de techos\\
+\hline
+$\beta_{94}$ (100.00\%) & 0.1513 (0.0284) & (0.0957, 0.2052) & Indicador de presencia de menores de 18 años en el hogar\\
+\hline
+$\beta_{99}$ (100.00\%) & 0.1143 (0.0117) & (0.0916, 0.1374) & Indicador de carencia de luz\\
+\hline
+$\beta_{100}$ (94.00\%) & -0.0054 (0.1131) & (-0.2267, 0.2054) & Prestaciones laborales del jefe Afore\\
+\hline
+$\beta_{102}$ (100.00\%) & -0.2868 (0.0105) & (-0.3085, -0.2661) & Jefe del hogar que no sabe leer y escribir\\
+\hline
+$\beta_{103}$ (100.00\%) & 0.0724 (0.0117) & (0.0501, 0.0949) & Jefe desocupado\\
+\hline
+$\beta_{104}$ (100.00\%) & -0.2158 (0.0257) & (-0.2678, -0.1661) & Jefe hablante de lengua indígena\\
+\hline
+$\beta_{105}$ (100.00\%) & -0.1082 (0.0133) & (-0.1333, -0.0823) & jefe con posición de independiente\\
+\hline
+$\beta_{106}$ (100.00\%) & -0.0938 (0.0168) & (-0.1280, -0.0635) & Jefe ocupado\\
+\hline
+$\beta_{107}$ (100.00\%) & -0.0988 (0.0221) & (-0.1415, -0.0529) & Jefe con carencia por rezago educativo\\
+\hline
+$\beta_{109}$ (99.40\%) & -0.2650 (0.1060) & (-0.4562, -0.0447) & Prestaciones laborales del jefe Servicios Médicos\\
+\hline
+\end{tabular}
+\end{table}
+
+
+\section*{Método Bayesiano variacional e implementación}
+Para obtener estimaciones de los parámetros de interés, se empleó el algoritmo inferencia variacional con diferenciación automática, \underline{automatic differentiation variational inference}, (ADVI). Este método se considera automático en el sentido de que el usuario sólo debe especificar un modelo y los datos, sin preocuparse por más aspectos inferenciales o de programación. Este se implementa en el lenguaje de programación probabilística Stan a través de la interfaz cmdstanr del lenguaje R. Una característica atractiva de Stan es que permite implementar una amplía variedad de modelos Bayesianos de forma sencilla.
+% sin embargo, existen dos restricciones principales al momento de definir y construir modelos: (1) no se se pueden optimizar parámetros discretos y (2) el modelo debe ser diferenciable.
+
+% Con respecto al primer punto, dado que no incluimos variables discretas en el modelo, podemos ignorar esta restricción. Para el segundo punto, una extensa gama de modelos son diferenciables, entre ellos, los modelos de regresión que consideramos aquí.
+
+% \footnote{El nombre proviene del cálculo de variaciones, que busca resolver problemas de optimización de funcionales imponiendo restricciones sobre las funciones de las que depende. \parencite{explaining-VI}.}
+
+El enfoque Bayesiano Variacional (BV) aproxima alguna densidad objetivo $p$, por ejemplo, la \underline{a posteriori} $p(\boldsymbol{\theta}\mid \boldsymbol{y})$, mediante una densidad de probabilidad $q(\boldsymbol{\theta})$ que pertenece a la familia de distribuciones manejable $\mathcal{Q}$. La mejor aproximación Bayesiana variacional $q^{\star}\in\mathcal{Q}$, se encuentra minimizando la divergencia Kullback-Leibler (KL) de $q(\boldsymbol{\theta})$ a $p(\boldsymbol{\theta} \, | \, \boldsymbol{y})$. Simbólicamente
+\begin{equation}
+q^{\star}(\boldsymbol{\theta}) = \argmin_{q\in \mathcal{Q}} \, \KL{q(\boldsymbol{\theta})}{p(\boldsymbol{y} \mid \boldsymbol{\theta})}.
+\end{equation}
+Esta divergencia es una medida de teoría de la información sobre la proximidad entre dos densidades: para $q$ y $p$ esta se define como
+\begin{align}
+\begin{aligned}
+\KL{q}{p} &\equiv \int q(\theta) \cdot \log \frac{q(\theta)}{p(\theta)}\, d\theta = \E_{q}[\log q(\theta)] - \E_{q}[\log p(\theta)],
+\end{aligned}
+\end{align}
+donde el valor esperado se toma con respecto a $q(\theta)$. Esta medida es asimétrica, no negativa y se minimiza cuando $q=p$. En general, la divergencia KL entre la aproximación propuesta y la verdadera \underline{a posteriori} es intratable, ya implica conocer la forma analítica o cerrada de la distribución \underline{a posteriori} y concretamente la evidencia del modelo $p(\boldsymbol{y})$. Por tal motivo, en la práctica se minimiza una función que es proporcional a la divergencia KL salvo por esta constante: el límite inferior de la evidencia, \underline{evidence lower bound} (ELBO). Así, el nuevo objetivo variacional es
+
+\begin{equation}
+q^{\star}(\boldsymbol{\theta}) = \argmin_{q\in \mathcal{Q}} \, \mathbb{E}_{q}[p(\boldsymbol{y} \mid \boldsymbol{\theta})] - \KL{q(\boldsymbol{\theta})}{p(\boldsymbol{\theta})}.
+\end{equation}
+
+El tipo de restricción impuesta sobre la familia variacional $\mathcal{Q}$ determina el tipo y la calidad de la aproxinación. A diferencia de las técnicas MCMC, el resultado de este método variacional no son muestras aleatorias de la densidad objetivo, sino la combinación de parámetros variacionales óptimos que minimizan la divergencia Kullback-Leibler (KL) entre la aproximación y la verdadera \underline{a posteriori}.
+
+El código fuente de R, Stan y el conjunto de datos empleado, están disponibles a través del siguiente repositorio de \underline{GitHub}
+\begin{itemize}
+\item \texttt{\url{https://github.com/Demian-33/Articulo_log_ictpc_cdmx}}
+\end{itemize}
+
+\end{document}
+
+
+
+
+
+

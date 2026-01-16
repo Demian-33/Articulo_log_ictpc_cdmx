@@ -11,5 +11,7 @@ Para generar un documento MS Word (`.docx`), puede emplearse `pandoc`. Sin embar
 
 `pandoc Artículo-final.tex --filter pandoc-crossref --bibliography=referencias-short.bib --citeproc --csl apa.csl -o Artículo-final.docx`
 
+Un excelente tutorial para esta tarea: *https://youtu.be/28yfsJ1sj8I*
+
 
 Saul Arturo Ortiz Muñoz (*ortiz.saul@colpos.mx*)
