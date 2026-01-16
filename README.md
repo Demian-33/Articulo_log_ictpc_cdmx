@@ -6,7 +6,10 @@ Este repositorio contiene:
 
 - Código LaTeX para generar un `.pdf` con el documento.
 
-Para generar un documento MS Word (`.docx`), puede emplearse `pandoc`. Sin embargo, no reproduce todos los elementos.
+Para generar un documento MS Word (`.docx`), puede emplearse `pandoc`. Sin embargo, no reproduce todos los elementos. Por ejemplo, el comando empleado es:
+
+
+`pandoc Artículo-final.tex --filter pandoc-crossref --bibliography=referencias-short.bib --citeproc --csl apa.csl -o Artículo-final.docx`
 
 
 Saul Arturo Ortiz Muñoz (*ortiz.saul@colpos.mx*)
