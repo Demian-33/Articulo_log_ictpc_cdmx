@@ -16,8 +16,8 @@ rm(list=ls())
 gc()
 ruta <- r'(C:\Maestria\Articulo-GitHub)'
 setwd(ruta)
-load('./Xyregion-CDMX.Rdata')
-source('./funciones-final.R')
+load('./codigo-r-stan-datos/Xyregion-CDMX.Rdata')
+source('./codigo-r-stan-datos/funciones-final.R')
 
 muni <- c(
   'Azcapotzalco', 'Coyoacán', 'Cuajimalpa de Morelos', 'Gustavo A. Madero',
@@ -54,7 +54,7 @@ dim(Xtmp) # 110 covariables
 
 # (1) Modelo para predicción ====
 # Un intercepto puede suplir la necesidad de una a priori jerárquica en varios interceptos
-file <- file.path('codigo-stan', 'LogSN-rho01-SSVS-oneInt.stan')
+file <- file.path('codigo-r-stan-datos', 'LogSN-rho01-SSVS-oneInt.stan')
 mod <- cmdstan_model(file, compile=T) # compilar genera el .exe
 
 ## (1.1) Seleccionar datos ====
@@ -135,8 +135,8 @@ tproc_vb <- proc.time()-t0 # Tiempo de proceso
 #   refresh = 1000
 # )
 # tproc_hmc <- proc.time()-t0 # Tiempo de proceso
-load(r'(fit_hmc-oneInt_burnin_13k_iter2k_thin2_out8-15_noCPV.Rdata)')
-tproc_hmc <- readLines('Tiempo-hmc-oneInt.txt')
+load(r'(codigo-r-stan-datos\fit_hmc-oneInt_burnin_13k_iter2k_thin2_out8-15_noCPV.Rdata)')
+tproc_hmc <- readLines(r'(codigo-r-stan-datos\Tiempo-hmc-oneInt.txt)')
 tproc_hmc <- as.numeric(str_split(tproc_hmc, '-',simplify = T)[1:3, 1])
 
 ## (1.4) Precisión y tiempo (predicción) ====
@@ -180,13 +180,12 @@ g1 <- ggplot(dftmp, aes(x=Ajustados_hmc, y=Observados, color=Alcaldía, shape=Al
   theme(legend.position = 'top', text=element_text(family='serif', size=11)) + 
   labs(x='log-ICTPC ajustado', y='log-ICTPC observado')
 x11(); print(g1)
-
 # Figura 4, (a) y (b). log-observados vs log-ajustados
-ggsave('./Figuras/LogSN-CDMX-vb.png', plot=g0, width=15, heigh=15, units='cm')
-ggsave('./Figuras/LogSN-CDMX-hmc.png', plot=g1, width=15, heigh=15, units='cm')
+# ggsave('./Figuras/LogSN-CDMX-vb.png', plot=g0, width=15, heigh=15, units='cm')
+# ggsave('./Figuras/LogSN-CDMX-hmc.png', plot=g1, width=15, heigh=15, units='cm')
 
 # (2) Modelo para estimación ====
-file <- file.path('codigo-stan', 'LogSN-rho01-SSVS-genq-oneInt.stan')
+file <- file.path('codigo-r-stan-datos', 'LogSN-rho01-SSVS-genq-oneInt.stan')
 mod <- cmdstan_model(file, compile=T) 
 
 ## (2.1) Seleccionar datos ====
@@ -262,7 +261,7 @@ idx0 <- 1:ncol(dat$X_obs)
 idx1 <- str_split(posterior_prob(fit_vb)[1, 2], '', simplify = T) %>%
   unlist() %>% as.numeric() %>% as.logical()
 
-load('./TablaCovariables.Rdata')
+load('./codigo-r-stan-datos/TablaCovariables.Rdata') # tabla de covariables procesada
 beta_out <- tibble(
   Parametro,
   Freq=Frecuencia,
@@ -383,7 +382,7 @@ LG_plot <- ggplot(LG_all, aes(x=p, y=L, group=Ámbito, linetype=Ámbito, color=�
 
 # Figura 5. Curva de Lorenz
 x11(); plot(LG_plot)
-ggsave(filename='./Figuras/Lorenz-CDMX.png', plot=LG_plot, width=15, heigh=15, units='cm')
+# ggsave(filename='./Figuras/Lorenz-CDMX.png', plot=LG_plot, width=15, heigh=15, units='cm')
 
 ## (3.5) Porcentaje de personas con las LPI y LPEI ====
 ## no se duplica la info: ambas fuentes reproducen la ciudad (casi) completa
@@ -536,7 +535,95 @@ y_hist3 <- ggplot(dftmp, aes(x=y)) +
 x11(); plot(y_hist3)
 
 # Figura 3 (a) y (b)
-ggsave("./Figuras/dist-log-ict.png", plot = y_hist, width = 15, height = 15, units = "cm")
-ggsave("./Figuras/dist-log-ict-ambito.png", plot = y_hist3, width = 15, height = 15, units = "cm")
+# ggsave("./Figuras/dist-log-ict.png", plot = y_hist, width = 15, height = 15, units = "cm")
+# ggsave("./Figuras/dist-log-ict-ambito.png", plot = y_hist3, width = 15, height = 15, units = "cm")
+
+
+
+# (5) Mapas ----
+# Requiere instalar y cargar varias librerías, además
+# asume que se ha ejectuado todo el código previo
+## (5.1) Cargar librerías ----
+library(sf) # st_read
+library(ggspatial) # annotation_map_tile
+
+# Genera la lista de alcaldias
+draw_key_cust <- function(data, params, size) {
+  data_text <- data
+  data_text[c("family")] <- 'serif'
+  data_text[c("label")] <- key_label2[names(pal)[match(data$colour, pal)]]
+  data_text[c("fill")] <- NULL
+  data_text$colour <- "black" # color dentro del cuadrito
+  data_text$alpha <- 1
+  data_text$size <- 11 / .pt
+  grid::grobTree(
+    draw_key_rect(data, list()),
+    draw_key_text(data_text, list())
+  )
+}
+
+# cargar el mapa base
+carto_lightnl_url <- "https://a.basemaps.cartocdn.com/light_nolabels/${z}/${x}/${y}.png" # no labels
+# carto_light_url <- "https://a.basemaps.cartocdn.com/light_all/${z}/${x}/${y}.png" # con labels
+# cargar el shapefile
+shp <- st_read(r'(codigo-r-stan-datos\poligonos_alcaldias_cdmx\poligonos_alcaldias_cdmx.shp)')
+# empezar en 001 y terminar en 016
+shp$CVE_MUN <- str_pad(as.numeric(shp$CVE_MUN)-1, width=3, pad='0')
+# estableces colores
+pal <- scales::grey_pal(start=0, end=0.11)(16)
+names(pal) <- shp$NOMGEO
+key_label <- shp$NOMGEO
+names(key_label) <- shp$CVE_MUN
+key_label2 <- shp$CVE_MUN
+names(key_label2) <- shp$NOMGEO
+# poner cada estimación a la alcaldia correcta
+orden <- match(dftmp2$Alcaldia, shp$NOMGEO) # el elemento i (i=1, 2, ...) de #1 esta en la posición indicada de #2
+# dftmp2 contiene los porcentajes bajo LPI y LPEI
+shp$LPI_porcentaje[orden] <- dftmp2$Porcentaje_LPI
+shp$LPEI_porcentaje[orden] <- dftmp2$Porcentaje_LPEI
+
+# Mapa LPI
+g1 <- ggplot() +
+  annotation_map_tile(type = carto_lightnl_url, zoomin = 0, alpha = 0.8, progress = "none") +
+  geom_sf(data = shp, aes(fill= LPI_porcentaje)) +
+  geom_sf_label(data=shp, aes(label = CVE_MUN, colour=NOMGEO, family='serif'), size = 4,  key_glyph = "cust") + 
+  scale_colour_manual(name="Alcaldías", values = pal, limits=key_label) + 
+  annotation_scale(location = "bl", width_hint = 0.4, text_family='serif') +
+  annotation_north_arrow(location = "tl", which_north = "true", 
+                         pad_x = unit(0.0, "in"), pad_y = unit(0.2, "in"),
+                         style = north_arrow_fancy_orienteering) + 
+  scale_fill_gradientn(colours = RColorBrewer::brewer.pal(9, "Greys")) + 
+  scale_fill_gradient(low = "gray100", high = "gray50", limits=c(0, 50), breaks = seq(0, 50, by = 10)) +
+  labs(fill ='Población bajo\nLPI (%)', title = "", x='', y='') + 
+  theme(
+    text = element_text(family = "serif", size=11),
+    legend.position = 'right',
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 1)) 
+x11(); print(g1)
+
+g2 <- ggplot() +
+  annotation_map_tile(type = carto_lightnl_url, zoomin = 0, alpha = 0.8, progress = "none") +
+  geom_sf(data = shp, aes(fill= LPEI_porcentaje)) +
+  geom_sf_label(data=shp, aes(label = CVE_MUN, colour=NOMGEO, family='serif'), size = 4,  key_glyph = "cust") + 
+  scale_colour_manual(name="Alcaldías", values = pal, limits=key_label) + 
+  annotation_scale(location = "bl", width_hint = 0.4, text_family='serif') +
+  annotation_north_arrow(location = "tl", which_north = "true", 
+                         pad_x = unit(0.0, "in"), pad_y = unit(0.2, "in"),
+                         style = north_arrow_fancy_orienteering) + 
+  scale_fill_gradientn(colours = RColorBrewer::brewer.pal(9, "Greys")) + 
+  scale_fill_gradient(low = "gray100", high = "gray50", limits=c(0, 50), breaks = seq(0, 50, by = 10)) +
+  labs(fill ='Población bajo\nLPEI (%)', title = "", x='', y='') + 
+  theme(
+    text = element_text(family = "serif", size=11),
+    legend.position = 'right',
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 1)) 
+x11(); print(g2)
+
+getwd()
+# ggsave(plot=g1, filename='./Figuras/mapa-lpi.png', width=17.53, height = 17.53, units='cm')
+# ggsave(plot=g2, filename='./Figuras/mapa-lpei.png', width=17.53, height = 17.53, units='cm')
+
+
+
 
 
