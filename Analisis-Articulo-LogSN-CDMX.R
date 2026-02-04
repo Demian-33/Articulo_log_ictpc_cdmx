@@ -142,11 +142,29 @@ tproc_hmc <- as.numeric(str_split(tproc_hmc, '-',simplify = T)[1:3, 1])
 ## (1.4) Precisión y tiempo (predicción) ====
 fitted_vb0 <- apply(exp(fit_vb$draws('y_mis')), 2, mean)
 fitted_hmc0 <- apply(drop(exp(fit_hmc$draws('y_mis'))), 2, mean)
-m0 <- c(metrics(fitted_vb0, exp(datos$y_test)), tproc_vb[3])
-m1 <- c(metrics(fitted_hmc0, exp(datos$y_test)), tproc_hmc[3])
+# m0 <- c(metrics(fitted_vb0, exp(datos$y_test)), tproc_vb[3]) # old
+# m1 <- c(metrics(fitted_hmc0, exp(datos$y_test)), tproc_hmc[3]) # old
+
 ## Cuadro 4. Métricas del pronóstico
-round(m0, 4)
-round(m1, 4)
+# round(m0, 4) # old
+# round(m1, 4) # old
+
+tmp <- data.frame(y_obs=exp(datos$y_test),
+                  fitted_vb0,
+                  fitted_hmc0,
+                  region=datos$group[datos$missing])
+
+w08 <- 258/(258+96)
+w15 <- 96/(258+96)
+tmp08 <- subset(tmp, region==8)
+tmp15 <- subset(tmp, region==15)
+
+w08 * cor(tmp08$y_obs, tmp08$fitted_vb0) + w15 * cor(tmp15$y_obs, tmp15$fitted_vb0) # cor. ponderada
+w08 * cor(tmp08$y_obs, tmp08$fitted_vb0) + w15 * cor(tmp15$y_obs, tmp15$fitted_vb0) # cor. ponderada
+w08 * mean(abs(tmp08$y_obs - tmp08$fitted_vb0)) + w15 * mean(abs(tmp15$y_obs - tmp15$fitted_vb0)) # mae ponderado
+w08 * sqrt(mean((tmp08$y_obs - tmp08$fitted_vb0)**2)) + w15 * sqrt(mean((tmp15$y_obs - tmp15$fitted_vb0)**2)) # rmse ponderado
+w08 * mean(abs(tmp08$y_obs - tmp08$fitted_vb0)/tmp08$y_obs) + w15 * mean(abs(tmp15$y_obs - tmp15$fitted_vb0)/tmp15$y_obs) # mae ponderado
+
 
 ## (1.5) Grafico observados vs ajustados =====
 ## se grafican en escala log. para mejor visualizacion
@@ -161,13 +179,17 @@ dftmp <- data.frame(
   Ajustados_vb=fitted_vb,
   Ajustados_hmc=fitted_hmc)
 
-g0 <- ggplot(dftmp, aes(x=Ajustados_vb, y=Observados, color=Alcaldía, shape=Alcaldía, group=Alcaldía)) + 
+tmp08 <- subset(dftmp, `Alcaldía`=='Milpa Alta')
+tmp15 <- subset(dftmp, `Alcaldía`=='Miguel Hidalgo')
+w08 * cor(tmp08$Observados, tmp08$Ajustados_vb) + w15 * cor(tmp15$Observados, tmp15$Ajustados_vb) # cor. ponderada
+
+g0 <- ggplot(dftmp, aes(y=Ajustados_vb, x=Observados, color=Alcaldía, shape=Alcaldía, group=Alcaldía)) + 
   geom_abline(intercept = 0, slope=1, linewidth=1.2, color='gray5', lty=3) +
   geom_point(size=2) +
   scale_color_manual(values=c('Milpa Alta'='gray25', 'Miguel Hidalgo'='gray75'))+
   geom_smooth(method = 'lm', formula=y~x, se=F, color='gray25')+
   theme_minimal() + 
-  theme(legend.position = 'top', text=element_text(family='serif', size=11)) + 
+  theme(legend.position = 'top', text=element_text(family='serif', size=20)) + 
   labs(x='log-ICTPC ajustado', y='log-ICTPC observado')
 x11(); print(g0)
 
@@ -181,8 +203,8 @@ g1 <- ggplot(dftmp, aes(x=Ajustados_hmc, y=Observados, color=Alcaldía, shape=Al
   labs(x='log-ICTPC ajustado', y='log-ICTPC observado')
 x11(); print(g1)
 # Figura 4, (a) y (b). log-observados vs log-ajustados
-# ggsave('./Figuras/LogSN-CDMX-vb.png', plot=g0, width=15, heigh=15, units='cm')
-# ggsave('./Figuras/LogSN-CDMX-hmc.png', plot=g1, width=15, heigh=15, units='cm')
+ggsave('./Figuras/LogSN-CDMX-vb.png', plot=g0, width=15, heigh=15, units='cm')
+ggsave('./Figuras/LogSN-CDMX-hmc.png', plot=g1, width=15, heigh=15, units='cm')
 
 # (2) Modelo para estimación ====
 file <- file.path('codigo-r-stan-datos', 'LogSN-rho01-SSVS-genq-oneInt.stan')
@@ -378,11 +400,11 @@ LG_plot <- ggplot(LG_all, aes(x=p, y=L, group=Ámbito, linetype=Ámbito, color=�
   coord_fixed(ratio = 1) +
   geom_abline(intercept = 0, slope=1, linewidth=1.2, color='gray75', lty=1) + 
   theme_bw() + 
-  theme(text=element_text(family='serif', size=11), legend.position = 'top')
+  theme(text=element_text(family='serif', size=26), legend.position = 'top')
 
 # Figura 5. Curva de Lorenz
 x11(); plot(LG_plot)
-# ggsave(filename='./Figuras/Lorenz-CDMX.png', plot=LG_plot, width=15, heigh=15, units='cm')
+ggsave(filename='./Figuras/Lorenz-CDMX.png', plot=LG_plot, width=20, heigh=20, units='cm')
 
 ## (3.5) Porcentaje de personas con las LPI y LPEI ====
 ## no se duplica la info: ambas fuentes reproducen la ciudad (casi) completa
