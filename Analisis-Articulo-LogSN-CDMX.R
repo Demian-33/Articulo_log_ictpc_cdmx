@@ -158,12 +158,16 @@ w08 <- 258/(258+96)
 w15 <- 96/(258+96)
 tmp08 <- subset(tmp, region==8)
 tmp15 <- subset(tmp, region==15)
-
-w08 * cor(tmp08$y_obs, tmp08$fitted_vb0) + w15 * cor(tmp15$y_obs, tmp15$fitted_vb0) # cor. ponderada
+# metodo VB
 w08 * cor(tmp08$y_obs, tmp08$fitted_vb0) + w15 * cor(tmp15$y_obs, tmp15$fitted_vb0) # cor. ponderada
 w08 * mean(abs(tmp08$y_obs - tmp08$fitted_vb0)) + w15 * mean(abs(tmp15$y_obs - tmp15$fitted_vb0)) # mae ponderado
 w08 * sqrt(mean((tmp08$y_obs - tmp08$fitted_vb0)**2)) + w15 * sqrt(mean((tmp15$y_obs - tmp15$fitted_vb0)**2)) # rmse ponderado
-w08 * mean(abs(tmp08$y_obs - tmp08$fitted_vb0)/tmp08$y_obs) + w15 * mean(abs(tmp15$y_obs - tmp15$fitted_vb0)/tmp15$y_obs) # mae ponderado
+w08 * mean(abs(tmp08$y_obs - tmp08$fitted_vb0)/tmp08$y_obs) + w15 * mean(abs(tmp15$y_obs - tmp15$fitted_vb0)/tmp15$y_obs) # mape ponderado
+# metodo HMC
+w08 * cor(tmp08$y_obs, tmp08$fitted_hmc0) + w15 * cor(tmp15$y_obs, tmp15$fitted_hmc0) # cor. ponderada
+w08 * mean(abs(tmp08$y_obs - tmp08$fitted_hmc0)) + w15 * mean(abs(tmp15$y_obs - tmp15$fitted_hmc0)) # mae ponderado
+w08 * sqrt(mean((tmp08$y_obs - tmp08$fitted_hmc0)**2)) + w15 * sqrt(mean((tmp15$y_obs - tmp15$fitted_hmc0)**2)) # rmse ponderado
+w08 * mean(abs(tmp08$y_obs - tmp08$fitted_hmc0)/tmp08$y_obs) + w15 * mean(abs(tmp15$y_obs - tmp15$fitted_hmc0)/tmp15$y_obs) # mape ponderado
 
 
 ## (1.5) Grafico observados vs ajustados =====
@@ -182,24 +186,25 @@ dftmp <- data.frame(
 tmp08 <- subset(dftmp, `Alcaldía`=='Milpa Alta')
 tmp15 <- subset(dftmp, `Alcaldía`=='Miguel Hidalgo')
 w08 * cor(tmp08$Observados, tmp08$Ajustados_vb) + w15 * cor(tmp15$Observados, tmp15$Ajustados_vb) # cor. ponderada
+w08 * cor(tmp08$Observados, tmp08$Ajustados_hmc) + w15 * cor(tmp15$Observados, tmp15$Ajustados_hmc) # cor. ponderada
 
 g0 <- ggplot(dftmp, aes(y=Ajustados_vb, x=Observados, color=Alcaldía, shape=Alcaldía, group=Alcaldía)) + 
   geom_abline(intercept = 0, slope=1, linewidth=1.2, color='gray5', lty=3) +
   geom_point(size=2) +
   scale_color_manual(values=c('Milpa Alta'='gray25', 'Miguel Hidalgo'='gray75'))+
-  geom_smooth(method = 'lm', formula=y~x, se=F, color='gray25')+
+  # geom_smooth(method = 'lm', formula=y~x, se=F, color='gray25')+
   theme_minimal() + 
   theme(legend.position = 'top', text=element_text(family='serif', size=20)) + 
   labs(x='log-ICTPC ajustado', y='log-ICTPC observado')
 x11(); print(g0)
 
-g1 <- ggplot(dftmp, aes(x=Ajustados_hmc, y=Observados, color=Alcaldía, shape=Alcaldía, group=Alcaldía)) + 
+g1 <- ggplot(dftmp, aes(y=Ajustados_hmc, x=Observados, color=Alcaldía, shape=Alcaldía, group=Alcaldía)) + 
   geom_abline(intercept = 0, slope=1, linewidth=1.2, color='gray5', lty=3) +
   geom_point(size=2) +
   scale_color_manual(values=c('Milpa Alta'='gray25', 'Miguel Hidalgo'='gray75'))+
-  geom_smooth(method = 'lm', formula=y~x, se=F, color='gray25')+
+  # geom_smooth(method = 'lm', formula=y~x, se=F, color='gray25')+
   theme_minimal() + 
-  theme(legend.position = 'top', text=element_text(family='serif', size=11)) + 
+  theme(legend.position = 'top', text=element_text(family='serif', size=20)) + 
   labs(x='log-ICTPC ajustado', y='log-ICTPC observado')
 x11(); print(g1)
 # Figura 4, (a) y (b). log-observados vs log-ajustados
