@@ -254,6 +254,7 @@ init_list <- list(
   rho=rep(rho0, times=K)
 )
 
+
 ## (2.3) Correr modelo con VB ====
 t0 <- proc.time()
 fit_vb <- mod$variational(
